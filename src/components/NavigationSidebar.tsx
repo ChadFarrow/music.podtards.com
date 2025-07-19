@@ -1,0 +1,353 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Home, 
+  X, 
+  Disc, 
+  Folder, 
+  Crown, 
+  Music,
+  ChevronRight
+} from 'lucide-react';
+import { useSidebar } from '@/components/ui/sidebar';
+import { useColorExtraction } from '@/hooks/useColorExtraction';
+import { usePodcastPlayer } from '@/hooks/usePodcastPlayer';
+import { APP_VERSION } from '@/lib/version';
+
+interface NavigationItem {
+  id: string;
+  title: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  route: string;
+  hasSubmenu?: boolean;
+}
+
+const navigationItems: NavigationItem[] = [
+  {
+    id: 'all-albums',
+    title: 'All Albums',
+    icon: Disc,
+    route: '/albums'
+  },
+  {
+    id: 'the-doerfels',
+    title: 'The Doerfels',
+    icon: Folder,
+    route: '/albums', // Will be handled by state in Albums page
+    hasSubmenu: true
+  },
+  {
+    id: 'producers-picks',
+    title: 'Producers Picks',
+    icon: Crown,
+    route: '/albums', // Will be handled by state in Albums page
+    hasSubmenu: true
+  },
+  {
+    id: 'live-concerts',
+    title: 'Live Concerts',
+    icon: Music,
+    route: '/albums', // Will be handled by state in Albums page
+    hasSubmenu: true
+  }
+];
+
+export function NavigationSidebar() {
+  const { setOpenMobile } = useSidebar();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeItem, setActiveItem] = useState('all-albums');
+  const [animationDelay, setAnimationDelay] = useState(0);
+  const { currentPodcast } = usePodcastPlayer();
+
+  // Extract colors from current podcast artwork
+  const { colors } = useColorExtraction(currentPodcast?.imageUrl);
+
+  // Default color scheme
+  const defaultColors = {
+    primary: '#667eea',
+    secondary: '#764ba2',
+    accent: '#f093fb',
+    primaryLight: '#748ffc',
+    secondaryLight: '#8b5fbf'
+  };
+
+  // Use extracted colors or fall back to defaults
+  const themeColors = colors || defaultColors;
+
+  // CSS custom properties style object
+  const customProperties = {
+    '--primary-color': themeColors.primary,
+    '--secondary-color': themeColors.secondary,
+    '--accent-color': themeColors.accent,
+    '--primary-light': themeColors.primaryLight || themeColors.primary,
+    '--secondary-light': themeColors.secondaryLight || themeColors.secondary,
+    '--gradient': `linear-gradient(90deg, ${themeColors.primary}, ${themeColors.secondary}, ${themeColors.accent || themeColors.secondary})`
+  } as React.CSSProperties;
+
+  // Update active item based on current route
+  useEffect(() => {
+    const path = location.pathname;
+    
+    if (path === '/albums' || path.startsWith('/albums/')) {
+      setActiveItem('all-albums');
+    } else if (path === '/') {
+      setActiveItem('all-albums');
+    } else {
+      setActiveItem('all-albums');
+    }
+  }, [location]);
+
+  // Handle navigation item click
+  const handleNavItemClick = (item: NavigationItem) => {
+    setActiveItem(item.id);
+    
+    // For folder items, we'll navigate to albums and let the Albums page handle the folder state
+    // This maintains compatibility with the existing Albums page folder system
+    if (item.id === 'all-albums' || item.hasSubmenu) {
+      navigate('/albums');
+    } else {
+      navigate(item.route);
+    }
+    
+    setOpenMobile(false); // Close mobile sidebar
+  };
+
+  // Handle close button
+  const handleClose = () => {
+    setOpenMobile(false);
+  };
+
+  // Handle back to main app
+  const handleBackToMain = () => {
+    navigate('/');
+    setOpenMobile(false);
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <>
+      <style jsx>{`
+        .navigation-sidebar {
+          --primary-color: ${themeColors.primary};
+          --secondary-color: ${themeColors.secondary};
+          --accent-color: ${themeColors.accent};
+          --primary-light: ${themeColors.primaryLight || themeColors.primary};
+          --secondary-light: ${themeColors.secondaryLight || themeColors.secondary};
+          --gradient: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+        }
+
+        .nav-item {
+          opacity: 0;
+          transform: translateX(-20px);
+          animation: slideIn 0.3s ease forwards;
+        }
+
+        .nav-item:nth-child(1) { animation-delay: 0.1s; }
+        .nav-item:nth-child(2) { animation-delay: 0.2s; }
+        .nav-item:nth-child(3) { animation-delay: 0.3s; }
+        .nav-item:nth-child(4) { animation-delay: 0.4s; }
+        .nav-item:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .nav-item-shimmer::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .nav-item:hover.nav-item-shimmer::before {
+          left: 100%;
+        }
+      `}</style>
+
+      <div 
+        className="navigation-sidebar w-full h-full flex flex-col overflow-hidden relative"
+        style={{
+          background: 'rgba(17, 17, 17, 0.95)',
+          backdropFilter: 'blur(20px)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          ...customProperties
+        }}
+      >
+        {/* Top gradient line */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-0.5 opacity-80"
+          style={{
+            background: 'var(--gradient)'
+          }}
+        />
+
+        {/* Header */}
+        <div 
+          className="flex items-center justify-between p-6 border-b"
+          style={{
+            borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+            background: 'rgba(255, 255, 255, 0.02)'
+          }}
+        >
+          <h2 className="text-xl font-bold text-white tracking-tight">
+            Navigation
+          </h2>
+          <button
+            onClick={handleClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: 'rgba(255, 255, 255, 0.7)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-4 flex flex-col gap-2">
+          {/* Back to Main App */}
+          <button
+            onClick={handleBackToMain}
+            className="nav-item nav-item-shimmer flex items-center p-4 rounded-xl transition-all duration-300 relative overflow-hidden mb-4"
+            style={{
+              color: 'rgba(255, 255, 255, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.03)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.transform = 'translateX(4px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+              e.currentTarget.style.transform = 'translateX(0)';
+            }}
+          >
+            <div className="w-5 h-5 mr-4 flex items-center justify-center flex-shrink-0">
+              <Home size={20} />
+            </div>
+            <span className="flex-1 text-left text-base font-medium">
+              Back to Main App
+            </span>
+          </button>
+
+          {/* Section Divider */}
+          <div 
+            className="h-px my-3"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)'
+            }}
+          />
+
+          {/* Navigation Items */}
+          {navigationItems.map((item, index) => {
+            const Icon = item.icon;
+            const isActive = activeItem === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavItemClick(item)}
+                className={`nav-item nav-item-shimmer flex items-center p-4 rounded-xl transition-all duration-300 relative overflow-hidden ${
+                  isActive ? 'border' : 'border border-transparent'
+                }`}
+                style={{
+                  color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
+                  background: isActive 
+                    ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3))' 
+                    : 'transparent',
+                  borderColor: isActive ? 'rgba(102, 126, 234, 0.5)' : 'transparent',
+                  boxShadow: isActive ? '0 4px 12px rgba(102, 126, 234, 0.2)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.borderColor = 'transparent';
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }
+                }}
+              >
+                <div className="w-5 h-5 mr-4 flex items-center justify-center flex-shrink-0">
+                  <Icon size={20} />
+                </div>
+                <span className="flex-1 text-left text-base font-medium">
+                  {item.title}
+                </span>
+                {item.hasSubmenu && (
+                  <ChevronRight 
+                    size={16} 
+                    className="opacity-60 transition-all duration-200"
+                    style={{
+                      transform: 'rotate(0deg)'
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div 
+          className="p-6 border-t"
+          style={{
+            borderTopColor: 'rgba(255, 255, 255, 0.08)',
+            background: 'rgba(255, 255, 255, 0.02)'
+          }}
+        >
+          <div 
+            className="text-center text-xs"
+            style={{ color: 'rgba(255, 255, 255, 0.4)' }}
+          >
+            Podtardstr v{APP_VERSION}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
