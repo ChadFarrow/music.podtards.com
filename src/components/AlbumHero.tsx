@@ -1,7 +1,6 @@
 import { Play, Pause } from 'lucide-react';
-import { SecureImage } from '@/components/SecureImage';
-import { htmlToText } from '@/lib/html-utils';
-import { FundingButton } from '@/components/FundingButton';
+import { SecureImage } from './SecureImage';
+import { htmlToText } from '../lib/html-utils';
 
 interface FundingInfo {
   url: string;
@@ -86,8 +85,6 @@ export function AlbumHero({
                 </div>
               </div>
             </div>
-            
-
           </div>
           
           {/* Album Details */}
@@ -117,7 +114,14 @@ export function AlbumHero({
             
             {funding && (
               <div className="flex justify-center lg:justify-start pt-4">
-                <FundingButton funding={funding} />
+                <a 
+                  href={funding.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  Support Artist
+                </a>
               </div>
             )}
           </div>
@@ -125,4 +129,4 @@ export function AlbumHero({
       </div>
     </div>
   );
-} 
+}
