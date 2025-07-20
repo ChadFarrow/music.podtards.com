@@ -158,7 +158,20 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
   };
 
   // Check if this is a publisher feed (has podcast:medium="publisher")
-  const medium = channel.querySelector('podcast\\:medium')?.textContent?.trim();
+  let medium = channel.querySelector('podcast\\:medium')?.textContent?.trim();
+  
+  // Try alternative selectors if the first one doesn't work
+  if (!medium) {
+    const allElements = channel.querySelectorAll('*');
+    for (const element of Array.from(allElements)) {
+      if (element.tagName.toLowerCase().includes('medium')) {
+        medium = element.textContent?.trim();
+        console.log('🏢 Found medium via tagName search:', medium);
+        break;
+      }
+    }
+  }
+  
   console.log('🏢 Checking feed medium:', medium);
   if (medium === 'publisher') {
     console.log('🏢 Detected publisher feed, parsing remoteItem albums...');
