@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { url } = req.query;
+  const { url, cache: cacheBust } = req.query;
   
   if (!url || typeof url !== 'string') {
     res.status(400).json({ error: 'URL parameter is required' });
@@ -48,11 +48,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    // Generate cache key
-    const cacheKey = createHash('md5').update(url).digest('hex');
+    // Generate cache key with cache busting
+    const cacheKey = createHash('md5').update(url + (cacheBust || '')).digest('hex');
     
-    // Check cache first
-    const cached = cache.get(cacheKey);
+    // Check cache first (skip if cache busting)
+    const cached = cacheBust ? null : cache.get(cacheKey);
     const now = Date.now();
     
     if (cached && (now - cached.timestamp) < CACHE_TTL) {

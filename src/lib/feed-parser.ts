@@ -115,7 +115,19 @@ async function fetchPodRollArtwork(feedUrl: string): Promise<string | undefined>
       }
       return artwork;
     } else {
-      console.log(`🎨 No artwork found in feed`);
+      console.log(`🎨 No artwork found in feed, trying to extract from episodes...`);
+      // Try to get artwork from the first episode if channel doesn't have one
+      const firstItem = doc.querySelector('item');
+      if (firstItem) {
+        const episodeImage = getEpisodeImage(firstItem);
+        if (episodeImage) {
+          console.log(`🎨 Using episode artwork as fallback: ${episodeImage}`);
+          if (episodeImage.startsWith('http') && !episodeImage.includes('images.weserv.nl')) {
+            return `https://images.weserv.nl/?url=${encodeURIComponent(episodeImage)}&w=300&h=300&fit=crop&auto=format`;
+          }
+          return episodeImage;
+        }
+      }
       return undefined;
     }
   } catch (error) {
@@ -411,9 +423,13 @@ async function parsePodRoll(element: Element): Promise<PodRollItem[] | undefined
 
   // Fetch artwork for all items in parallel with Promise.allSettled
   const artworkPromises = itemsToProcess.map(async (item) => {
-    if (item.feedUrl && !item.image) {
+    // Always try to fetch artwork, even if we have an image, to get the best quality
+    if (item.feedUrl) {
       console.log(`🎯 Attempting to fetch iTunes artwork for: "${item.title}" from ${item.feedUrl}`);
-      return await fetchPodRollArtwork(item.feedUrl);
+      const fetchedArtwork = await fetchPodRollArtwork(item.feedUrl);
+      if (fetchedArtwork) {
+        return fetchedArtwork;
+      }
     }
     return item.image;
   });
@@ -804,8 +820,8 @@ export async function fetchAndParseFeed(feedUrl: string): Promise<ParsedFeed> {
     
     // Use server-side RSS proxy to completely avoid CORS issues
     const proxies = [
-      // Primary: Use our server-side RSS proxy
-      (url: string) => `/api/rss-proxy?url=${encodeURIComponent(url)}`,
+      // Primary: Use our server-side RSS proxy with cache busting
+      (url: string) => `/api/rss-proxy?url=${encodeURIComponent(url)}&cache=${Date.now()}`,
       // Fallback proxies if server is down
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
       (url: string) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
