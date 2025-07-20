@@ -122,6 +122,31 @@ describe('Feed Parser', () => {
       expect(feed.episodes[0].value).toBeUndefined();
     });
 
+    it('should parse podcast:publisher tags', async () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+        <rss xmlns:podcast="https://podcastindex.org/namespace/1.0">
+          <channel>
+            <title>Test Podcast</title>
+            <description>A test podcast</description>
+            <podcast:publisher>Test Publisher Inc.</podcast:publisher>
+            
+            <item>
+              <title>Episode 1</title>
+              <description>First episode</description>
+              <guid>episode-1</guid>
+              <podcast:publisher>Episode Publisher LLC</podcast:publisher>
+            </item>
+          </channel>
+        </rss>`;
+
+      const feed = await parseFeedXML(xml);
+
+      expect(feed.title).toBe('Test Podcast');
+      expect(feed.publisher).toBe('Test Publisher Inc.');
+      expect(feed.episodes).toHaveLength(1);
+      expect(feed.episodes[0].publisher).toBe('Episode Publisher LLC');
+    });
+
     it('should filter out invalid recipients', async () => {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
         <rss xmlns:podcast="https://podcastindex.org/namespace/1.0">

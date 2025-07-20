@@ -38,6 +38,7 @@ export interface ParsedFeed {
   link?: string;
   image?: string;
   author?: string;
+  publisher?: string;
   value?: ValueBlock;
   podroll?: PodRollItem[];
   funding?: FundingInfo;
@@ -52,6 +53,7 @@ export interface ParsedEpisode {
   pubDate?: string;
   duration?: string;
   image?: string;
+  publisher?: string;
   enclosure?: {
     url: string;
     type: string;
@@ -139,6 +141,7 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
     link: getTextContent(channel, 'link'),
     image: getChannelImage(channel),
     author: getChannelAuthor(channel),
+    publisher: getTextContent(channel, 'podcast\\:publisher'),
     value: parseValueBlock(channel),
     podroll: await parsePodRoll(channel),
     funding: parseFunding(channel),
@@ -159,6 +162,7 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
       pubDate: getTextContent(item, 'pubDate'),
       duration: duration,
       image: getEpisodeImage(item),
+      publisher: getTextContent(item, 'podcast\\:publisher'),
       value: parseValueBlock(item)
     };
 

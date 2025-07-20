@@ -1,7 +1,7 @@
 import path from "node:path";
 import { execSync } from "node:child_process";
 
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 // https://vitejs.dev/config/
