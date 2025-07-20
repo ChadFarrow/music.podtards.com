@@ -112,9 +112,9 @@ This folder and repository can be safely deleted.
 ## 🎯 Project Overview
 **Podtardstr Music** - A focused album discovery site with Value4Value (V4V) Lightning payments integrated, designed as a standalone music experience.
 
-**Last Updated**: January 2025  
-**Version**: 1.0.0  
-**Status**: 🟢 Production Ready - Standalone Music Discovery Site
+**Last Updated**: July 20, 2025  
+**Version**: 1.268  
+**Status**: 🟢 Production Ready - Standalone Music Discovery Site with Publisher Feed Support
 
 ---
 
@@ -127,7 +127,7 @@ This folder and repository can be safely deleted.
 | **Individual Album Pages** | ✅ Complete | Immersive album experience with dynamic theming |
 | **Value4Value Payments** | ✅ Complete | Lightning payments via Bitcoin Connect |
 | **Podcast Player** | ✅ Complete | Built-in audio player with playlist support |
-| **RSS Feed Parsing** | ✅ Complete | Enhanced V4V data extraction with CORS-safe requests |
+| **RSS Feed Parsing** | ✅ Complete | Enhanced V4V data extraction with CORS-safe requests & publisher feeds |
 | **Dynamic Color Theming** | ✅ Complete | Apple Music-style color extraction from album artwork |
 | **Responsive Design** | ✅ Complete | Mobile-first design with Tailwind CSS |
 | **PWA Support** | ✅ Complete | Full iOS/Android PWA with service worker, offline caching |
@@ -137,7 +137,7 @@ This folder and repository can be safely deleted.
 | **Album Queue Management** | ✅ Complete | Fixed album playback to properly queue all tracks for autoplay |
 | **Track Switching** | ✅ Complete | Reliable track switching between albums using podcast ID comparison |
 | **Payment Split Display** | ✅ Complete | Recipient count visible on all boost buttons |
-| **Platform Integration** | ✅ Complete | Wavlake & LNBeats direct album linking |
+| **Platform Integration** | ✅ Complete | Wavlake & LNBeats direct album linking with publisher feed support |
 | **Message Support** | ✅ Complete | Optional messages in Lightning payment TLV metadata |
 | **Audio Loading Fixes** | ✅ Complete | Prevents conflicts and loading errors |
 | **Bottom Player Fixed** | ✅ Complete | Fixed positioning and always visible |
@@ -240,6 +240,17 @@ This folder and repository can be safely deleted.
 ---
 
 ## 🎯 Recent Achievements
+
+### **July 20, 2025 - Version 1.268 - Publisher Feed Support & CORS Fixes**
+- ✅ **Publisher Feed Support**: Full implementation of Podcast Index 2.0 publisher feeds for artist catalogs
+- ✅ **RSS Proxy Service**: Created Vercel function at `/api/rss-proxy.ts` for CORS-safe feed fetching
+- ✅ **Feed Parser Enhancement**: Added 6 fallback CORS proxy services for maximum reliability
+- ✅ **Album Discovery**: Artists like Nate Johnivan now show complete catalogs (20+ albums from publisher feeds)
+- ✅ **Image CORS Fixes**: Enhanced `useColorExtraction` hook with proactive proxy usage for known blocked domains
+- ✅ **Publisher Albums Display**: Dynamic "Albums by this Artist" sections populated from publisher feeds
+- ✅ **Wavlake Integration**: Full support for Wavlake's publisher feed structure and remote item references
+- ✅ **Error Handling**: Robust fallback systems for feed loading and image color extraction
+- ✅ **Multiple Proxy Fallbacks**: 4+ proxy services for image loading with timeout handling
 
 ### **July 20, 2025 - Version 1.267 - UI Enhancements and Theme System**
 - ✅ **Enhanced Navigation Sidebar**: Improved styling with CityBeach theme colors, removed "Back to Main App" link for standalone focus

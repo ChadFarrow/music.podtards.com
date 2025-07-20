@@ -70,5 +70,19 @@ export default defineConfig(() => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            ui: ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-tabs'],
+            payments: ['@getalby/bitcoin-connect', '@getalby/sdk'],
+            utils: ['date-fns', 'clsx', 'tailwind-merge']
+          }
+        }
+      },
+      target: 'es2015',
+      minify: 'esbuild'
+    },
   };
 });
