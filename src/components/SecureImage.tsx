@@ -1,28 +1,17 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { getSecureImageUrl, getFallbackImageUrl, getMusicFallbackEmoji, createFallbackDataUrl } from '@/lib/image-utils';
 
 interface SecureImageProps {
   src: string;
   alt: string;
   className?: string;
   fallback?: string;
-  width?: number;
-  height?: number;
 }
 
-export function SecureImage({ 
-  src, 
-  alt, 
-  className, 
-  fallback,
-  width = 800,
-  height = 800
-}: SecureImageProps) {
+export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureImageProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [fallbackIndex, setFallbackIndex] = useState(0);
 
   useEffect(() => {
     if (!src) {
@@ -33,12 +22,20 @@ export function SecureImage({
 
     setIsLoading(true);
     setHasError(false);
-    setFallbackIndex(0);
 
-    // Get the secure image URL
-    const secureSrc = getSecureImageUrl(src, { width, height });
+    // Convert HTTP to HTTPS for security
+    let secureSrc = src;
+    if (src.startsWith('http://')) {
+      secureSrc = src.replace('http://', 'https://');
+    }
+
+    // Use image proxy for HTTP images to avoid mixed content
+    if (src.startsWith('http://')) {
+      secureSrc = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&h=800&fit=cover`;
+    }
+
     setImgSrc(secureSrc);
-  }, [src, width, height]);
+  }, [src]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -46,35 +43,14 @@ export function SecureImage({
   };
 
   const handleError = () => {
-    // Get fallback URLs
-    const fallbackUrls = getFallbackImageUrl(src);
-    
-    // Try the next fallback URL
-    if (fallbackIndex < fallbackUrls.length) {
-      setFallbackIndex(prev => prev + 1);
-      setImgSrc(fallbackUrls[fallbackIndex]);
-      return;
-    }
-    
-    // If all proxies failed, create a fallback data URL
-    const fallbackEmoji = fallback || getMusicFallbackEmoji(src);
-    const fallbackDataUrl = createFallbackDataUrl(fallbackEmoji, Math.max(width, height));
-    setImgSrc(fallbackDataUrl);
-    
-    // Set a timeout to mark as loaded
-    setTimeout(() => {
-      setIsLoading(false);
-      setHasError(false);
-    }, 100);
+    setIsLoading(false);
+    setHasError(true);
   };
 
-  // Get a music-themed fallback emoji if none provided
-  const fallbackEmoji = fallback || getMusicFallbackEmoji(src);
-
-  if (hasError && !imgSrc) {
+  if (hasError) {
     return (
       <div className={cn('flex items-center justify-center bg-gray-800 text-gray-400 text-4xl', className)}>
-        {fallbackEmoji}
+        {fallback}
       </div>
     );
   }
@@ -95,7 +71,6 @@ export function SecureImage({
         loading="lazy"
         onLoad={handleLoad}
         onError={handleError}
-        crossOrigin="anonymous"
       />
     </>
   );

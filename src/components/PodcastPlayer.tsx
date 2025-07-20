@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
 import { usePodcastPlayer } from '@/hooks/usePodcastPlayer';
 import { NowPlayingModal } from '@/components/NowPlayingModal';
+import { Switch } from '@/components/ui/switch';
 import { useAlbumColors } from '@/hooks/useAlbumColors';
-import { useColorExtraction } from '@/hooks/useColorExtraction';
 
 export function PodcastPlayer() {
   const { 
@@ -24,383 +27,523 @@ export function PodcastPlayer() {
     autoPlay,
     setAutoPlay
   } = usePodcastPlayer();
-
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showNowPlaying, setShowNowPlaying] = useState(false);
+
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [loadedPodcastId, setLoadedPodcastId] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const albumColors = useAlbumColors();
 
-  // Extract colors from current podcast artwork
-  const { colors, isLoading } = useColorExtraction(currentPodcast?.imageUrl);
-
-  // Default color scheme (CityBeach theme)
-  const defaultColors = {
-    primary: '#40e0d0',
-    secondary: '#4fb3d9',
-    accent: '#5d8fef',
-    primaryLight: '#48e6d6',
-    secondaryLight: '#55b9df',
-    darkBg: '#0f3460',
-    glow: 'rgba(64, 224, 208, 0.4)',
-    hover: 'rgba(64, 224, 208, 0.1)'
-  };
-
-  // Use extracted colors or fall back to album colors or defaults
-  const themeColors = colors || albumColors || defaultColors;
-
-  // CSS custom properties style object
-  const customProperties = {
-    '--primary-color': themeColors.primary,
-    '--secondary-color': themeColors.secondary,
-    '--accent-color': themeColors.accent,
-    '--primary-light': themeColors.primary,
-    '--secondary-light': themeColors.secondary,
-    '--dark-bg': '#0f3460',
-    '--glow-color': 'rgba(64, 224, 208, 0.4)',
-    '--hover-bg': 'rgba(64, 224, 208, 0.1)'
-  } as React.CSSProperties;
-
-  // Detect iOS
+  // Detect iOS and initialize audio context for autoplay
   useEffect(() => {
     const detectIOS = () => {
       const userAgent = window.navigator.userAgent;
       const isIOSDevice = /iPad|iPhone|iPod/.test(userAgent);
       setIsIOS(isIOSDevice);
+      
+      if (isIOSDevice) {
+        console.log('iOS device detected - implementing autoplay workarounds');
+      }
     };
+    
     detectIOS();
   }, []);
 
-  // Audio event listeners
+  // Debug logging for component state
+  // console.log('PodcastPlayer render:', {
+  //   hasCurrentPodcast: !!currentPodcast,
+  //   currentPodcastId: currentPodcast?.id,
+  //   currentPodcastTitle: currentPodcast?.title,
+  //   currentPodcastUrl: currentPodcast?.url,
+  //   isPlaying,
+  //   hasUserInteracted
+  // });
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateTime = () => {
       const time = audio.currentTime;
+      console.log('Time update:', time, 'Duration:', audio.duration);
+      setCurrentTime(time);
+    };
+    const updateDuration = () => {
       const dur = audio.duration;
-      
-      if (!isNaN(time)) setCurrentTime(time);
-      if (!isNaN(dur) && dur !== Infinity) setDuration(dur);
+      setDuration(dur);
     };
 
-    const handleEnded = () => {
-      if (autoPlay) {
-        playNextAuto();
-      } else {
-        setIsPlaying(false);
+    // Error handler for media loading issues
+    const handleError = (event: Event) => {
+      const audio = event.target as HTMLAudioElement;
+      const error = audio.error;
+      
+      if (error) {
+        console.error('Audio element error:', {
+          code: error.code,
+          message: error.message,
+          src: audio.src
+        });
+        
+        // Handle different media error types
+        switch (error.code) {
+          case MediaError.MEDIA_ERR_ABORTED:
+            console.log('Media loading aborted by user');
+            break;
+          case MediaError.MEDIA_ERR_NETWORK:
+            console.error('Network error while loading media');
+            setIsPlaying(false);
+            break;
+          case MediaError.MEDIA_ERR_DECODE:
+            console.error('Media decoding error');
+            setIsPlaying(false);
+            break;
+          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            console.error('Media format not supported');
+            setIsPlaying(false);
+            break;
+          default:
+            console.error('Unknown media error');
+            setIsPlaying(false);
+        }
       }
     };
 
-    const handleError = (e: Event) => {
-      console.error('Audio error:', e);
-      setIsPlaying(false);
-    };
-
     audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('error', handleError);
-    audio.addEventListener('loadedmetadata', updateTime);
+    
+    // Auto-play next track when ended, if enabled
+    const handleEnded = () => {
+      console.log('🎵 Track ended, autoPlay enabled:', autoPlay);
+      if (autoPlay) {
+        console.log('🎵 Calling playNextAuto() for autoplay');
+        playNextAuto();
+        
+        // iOS-specific: Additional attempt with user interaction context
+        setTimeout(() => {
+          const audioElement = audioRef.current;
+          if (audioElement && audioElement.paused) {
+            console.log('🎵 Audio still paused after playNext, attempting direct play');
+            
+            // For iOS, we need to be more aggressive about autoplay
+            if (isIOS && hasUserInteracted) {
+              console.log('🎵 iOS: Using user interaction context for autoplay');
+              audioElement.play().catch(error => {
+                console.log('🎵 iOS autoplay failed:', error.name, error.message);
+                // On iOS, if autoplay fails, we might need to show a play button
+                if (error.name === 'NotAllowedError') {
+                  console.log('🎵 iOS: Autoplay blocked, user will need to tap play');
+                }
+              });
+            } else {
+              audioElement.play().catch(error => {
+                console.log('🎵 Direct autoplay failed:', error.name, error.message);
+              });
+            }
+          }
+        }, 100);
+      } else {
+        console.log('🎵 Autoplay disabled, not playing next track');
+      }
+    };
+    audio.addEventListener('ended', handleEnded);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
-      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('error', handleError);
-      audio.removeEventListener('loadedmetadata', updateTime);
+      audio.removeEventListener('ended', handleEnded);
     };
-  }, [autoPlay, playNextAuto, setCurrentTime, setDuration, setIsPlaying]);
+  }, [setCurrentTime, setDuration, playNextAuto, autoPlay]);
 
-  // Play/pause effect
+  // Enhanced play effect with autoplay support and user interaction tracking
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying && hasUserInteracted) {
-      audio.play().catch(error => {
-        console.log('Autoplay prevented:', error);
-        setAutoplayBlocked(true);
-        setIsPlaying(false);
-      });
-    } else if (!isPlaying) {
+    console.log('🎵 Play effect triggered:', {
+      isPlaying,
+      audioPaused: audio.paused,
+      audioSrc: audio.src,
+      audioReadyState: audio.readyState,
+      audioCurrentTime: audio.currentTime,
+      audioDuration: audio.duration,
+      hasUserInteracted,
+      currentPodcastId: currentPodcast?.id
+    });
+
+    if (isPlaying) {
+      // Mark user interaction when play is triggered from album buttons
+      if (!hasUserInteracted) {
+        console.log('Marking user interaction from play state');
+        setHasUserInteracted(true);
+      }
+      
+      // Only try to play if we haven't already started playing
+      if (audio.paused) {
+        console.log('Attempting to play audio');
+        
+        // iOS-specific: Load the audio before attempting to play
+        if (isIOS && !hasUserInteracted) {
+          console.log('iOS: Loading audio before play attempt');
+          audio.load();
+        }
+        
+        audio.play().then(() => {
+          console.log('🎵 Audio play successful for:', currentPodcast?.title);
+        }).catch((error) => {
+          console.error('Play effect error:', error);
+          
+          // Handle different types of errors gracefully
+          if (error.name === 'NotAllowedError') {
+            console.log('Autoplay blocked by browser - user interaction required');
+            setAutoplayBlocked(true);
+            
+            // iOS-specific handling
+            if (isIOS) {
+              console.log('iOS: Autoplay blocked, keeping UI in "ready to play" state');
+              // On iOS, don't immediately set isPlaying to false
+              // This allows the user to see the track is selected and ready
+              if (hasUserInteracted) {
+                setIsPlaying(false);
+              }
+            }
+          } else if (error.name === 'AbortError' || error.message.includes('aborted')) {
+            console.log('Audio fetch was aborted (likely due to rapid track switching) - this is normal');
+            // Don't change the playing state for abort errors - they're usually due to rapid clicking
+            return;
+          } else if (error.name === 'NetworkError' || error.message.includes('network')) {
+            console.error('Network error loading audio:', error.message);
+            setIsPlaying(false);
+          } else if (error.name === 'NotSupportedError') {
+            console.error('Audio format not supported:', error.message);
+            setIsPlaying(false);
+            // Could show a toast notification here
+          } else {
+            console.error('Unexpected audio error:', error.name, error.message);
+            setIsPlaying(false);
+          }
+        });
+      } else {
+        console.log('Audio already playing, skipping play() call');
+      }
+    } else {
+      console.log('Pausing audio');
       audio.pause();
     }
-  }, [isPlaying, hasUserInteracted, setIsPlaying]);
+  }, [isPlaying, setIsPlaying, hasUserInteracted, currentPodcast?.id]);
 
-  // Handle new track loading
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !currentPodcast) return;
-    
-    if (loadedPodcastId !== currentPodcast.id) {
-      audio.src = currentPodcast.url;
-      setLoadedPodcastId(currentPodcast.id);
-      setCurrentTime(0);
-      setDuration(0);
-    }
-  }, [currentPodcast, loadedPodcastId, setCurrentTime, setDuration]);
-
-  // Volume control
+  // Handle new track loading - COMPLETELY SIMPLIFIED: Let audio.play() handle loading
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    
+    // Reset loaded podcast ID if no current podcast
+    if (!currentPodcast) {
+      setLoadedPodcastId(null);
+      return;
+    }
+
+    // Check if this is actually a different track by comparing podcast IDs
+    if (loadedPodcastId === currentPodcast.id) {
+      console.log('Same podcast already loaded, skipping reload:', {
+        podcastId: currentPodcast.id,
+        title: currentPodcast.title
+      });
+      return;
+    }
+
+    console.log('Loading new track:', {
+      oldPodcastId: loadedPodcastId,
+      newPodcastId: currentPodcast.id,
+      title: currentPodcast.title,
+      url: currentPodcast.url
+    });
+
+    // Abort any previous loading
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this load
+    abortControllerRef.current = new AbortController();
+
+    // Reset time when a new track is loaded
+    setCurrentTime(0);
+    setDuration(0);
+
+    // MINIMAL APPROACH: Just set the source, don't force any loading
+    // Let audio.play() handle the loading when it's actually needed
+    console.log('🎵 Setting audio src:', currentPodcast.url);
+    audio.src = currentPodcast.url;
+    
+    // Track which podcast is now loaded
+    setLoadedPodcastId(currentPodcast.id);
+    
+    // If this track change was triggered and we should be playing, start playback
+    console.log('🎵 Track loaded. isPlaying state:', isPlaying);
+    if (isPlaying) {
+      console.log('🎵 Auto-starting playback for new track');
+      // Use a small delay to ensure audio source is set properly
+      setTimeout(() => {
+        if (audio.src === currentPodcast.url) {
+          audio.play().then(() => {
+            console.log('🎵 New track auto-play successful:', currentPodcast.title);
+          }).catch((error) => {
+            console.error('🎵 New track auto-play failed:', error);
+          });
+        }
+      }, 100);
+    }
+
+  }, [currentPodcast?.id, currentPodcast?.url, setCurrentTime, setDuration, loadedPodcastId, currentPodcast, isPlaying]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
     audio.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
-  // Format time helper
-  const formatTime = (time: number): string => {
-    if (!time || isNaN(time) || time === Infinity) return '0:00';
+  const handlePlayPause = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // Mark that user has interacted
+    setHasUserInteracted(true);
+    setAutoplayBlocked(false); // Reset autoplay blocked state on user interaction
+
+    // iOS-specific: Attempt to unlock audio context immediately on user interaction
+    if (isIOS && !isPlaying && audio.paused) {
+      console.log('iOS: User interaction detected, unlocking audio context');
+      
+      // Create a brief silent audio to unlock the audio context
+      const unlockAudio = new Audio();
+      unlockAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQEAAAC0';
+      unlockAudio.volume = 0;
+      unlockAudio.play().catch(() => {
+        console.log('iOS: Silent audio unlock failed, but continuing');
+      });
+    }
+
+    // If autoplay was blocked and user clicks play, try to resume autoplay capability
+    if (!isPlaying && audio.paused) {
+      console.log('User manually starting playback - this may enable future autoplay');
+    }
+
+    // HARD-CODED FIX: Simply toggle the state, let the effect handle audio
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (value: number[]) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const newTime = value[0];
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    setVolume(value[0]);
+  };
+
+  const handleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Handle play/pause
-  const handlePlayPause = () => {
-    setHasUserInteracted(true);
-    setIsPlaying(!isPlaying);
-  };
-
-  // Handle progress bar click
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-    const newTime = percentage * duration;
-    
-    audio.currentTime = newTime;
-    setCurrentTime(newTime);
-  };
-
-  // Handle volume bar click
-  const handleVolumeClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-    
-    setVolume(percentage);
-    setIsMuted(false);
-  };
-
-  // Handle volume button
-  const handleVolumeToggle = () => {
-    setIsMuted(!isMuted);
-  };
-
-  // Calculate progress percentage
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const volumePercentage = isMuted ? 0 : volume * 100;
-
   if (!currentPodcast) {
-    return null;
+    return (
+      <Card 
+        className={`border-t rounded-none fixed bottom-0 left-0 right-0 backdrop-blur-lg z-50 safe-area-bottom transition-all duration-300 ${
+          albumColors.isActive ? 'border-white/20' : 'border-gray-800'
+        }`}
+        style={albumColors.isActive ? {
+          background: `linear-gradient(to top, ${albumColors.primary}CC 0%, ${albumColors.secondary}80 100%)`,
+          paddingBottom: `max(0.75rem, env(safe-area-inset-bottom))`,
+          paddingLeft: `max(0.75rem, env(safe-area-inset-left))`,
+          paddingRight: `max(0.75rem, env(safe-area-inset-right))`
+        } : {
+          paddingBottom: `max(0.75rem, env(safe-area-inset-bottom))`,
+          paddingLeft: `max(0.75rem, env(safe-area-inset-left))`,
+          paddingRight: `max(0.75rem, env(safe-area-inset-right))`
+        }}
+      >
+        <div className="p-3 sm:p-4 text-center text-gray-400 text-sm">
+          No track selected. Click play on any track to start listening.
+        </div>
+      </Card>
+    );
   }
 
   return (
-    <>
-      <style>{`
-        .now-playing-bar {
-          --primary-color: ${themeColors.primary};
-          --secondary-color: ${themeColors.secondary};
-          --accent-color: ${themeColors.accent};
-          --primary-light: ${themeColors.primary};
-          --secondary-light: ${themeColors.secondary};
-          --dark-bg: #0f3460;
-          --glow-color: rgba(64, 224, 208, 0.4);
-          --hover-bg: rgba(64, 224, 208, 0.1);
-        }
-
-        .progress-fill::after {
-          content: '';
-          position: absolute;
-          right: -2px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 12px;
-          height: 12px;
-          background: var(--primary-color);
-          border-radius: 50%;
-          box-shadow: 0 2px 6px var(--glow-color);
-          opacity: 0;
-          transition: opacity 0.2s ease, background 0.5s ease, box-shadow 0.5s ease;
-        }
-
-        .progress-bar:hover .progress-fill::after {
-          opacity: 1;
-        }
-
-        .album-art {
-          transition: all 0.5s ease;
-        }
-
-        .now-playing-bar {
-          transition: transform 0.3s ease;
-        }
-
-        .now-playing-bar:hover {
-          transform: scale(1.01);
-        }
-      `}</style>
-
-      <div 
-        className="now-playing-bar fixed bottom-0 left-0 right-0 z-50 w-full bg-black/95 backdrop-blur-[20px] border-t border-white/20 flex items-center gap-5 px-6 py-3 overflow-hidden transition-transform duration-300"
-        style={{
-          background: 'rgba(15, 52, 96, 0.95)',
-          borderTopColor: 'rgba(64, 224, 208, 0.2)',
-          paddingBottom: `max(0.75rem, env(safe-area-inset-bottom))`,
-          paddingLeft: `max(1.5rem, env(safe-area-inset-left))`,
-          paddingRight: `max(1.5rem, env(safe-area-inset-right))`,
-          ...customProperties
-        }}
-      >
-        {/* Top gradient line */}
-        <div 
-          className="absolute top-0 left-0 right-0 h-0.5 opacity-60 transition-all duration-500"
-          style={{
-            background: `linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color))`
-          }}
+    <Card 
+      className={`border-t rounded-none fixed bottom-0 left-0 right-0 backdrop-blur-lg z-50 safe-area-bottom transition-all duration-300 ${
+        albumColors.isActive ? 'border-white/20' : 'border-gray-800 bg-black/75'
+      }`}
+      style={albumColors.isActive ? {
+        background: `linear-gradient(to top, ${albumColors.primary}CC 0%, ${albumColors.secondary}80 100%)`,
+        paddingBottom: `max(0.75rem, env(safe-area-inset-bottom))`,
+        paddingLeft: `max(0.75rem, env(safe-area-inset-left))`,
+        paddingRight: `max(0.75rem, env(safe-area-inset-right))`
+      } : {
+        paddingBottom: `max(0.75rem, env(safe-area-inset-bottom))`,
+        paddingLeft: `max(0.75rem, env(safe-area-inset-left))`,
+        paddingRight: `max(0.75rem, env(safe-area-inset-right))`
+      }}
+    >
+      <div className="p-3 sm:p-4">
+        <audio
+          ref={audioRef}
+          src={currentPodcast.url}
+          preload={isIOS ? "none" : "metadata"}
+          playsInline
+          controls={false}
         />
-
-        {/* Track Info */}
-        <div className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer" onClick={() => setShowNowPlaying(true)}>
-          <div 
-            className="album-art w-14 h-14 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 shadow-lg"
-            style={{
-              background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
-              boxShadow: `0 4px 12px var(--glow-color)`
-            }}
+        
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Episode Info - Clickable */}
+          <button 
+            onClick={() => setShowNowPlaying(true)}
+            className="flex items-center gap-3 min-w-0 flex-1 hover:bg-white/10 active:bg-white/20 -m-2 p-2 rounded-lg transition-colors touch-manipulation"
           >
             {currentPodcast.imageUrl ? (
-              <img 
-                src={currentPodcast.imageUrl} 
-                alt={currentPodcast.title}
-                className="w-full h-full object-cover rounded-lg"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <Music className={`${currentPodcast.imageUrl ? 'hidden' : ''} text-white`} size={24} />
-          </div>
-          
-          <div className="min-w-0 flex-1">
-            <div className="text-white text-base font-semibold truncate mb-0.5">
-              {currentPodcast.title}
+              <div className="h-12 w-12 sm:h-12 sm:w-12 rounded object-cover flex-shrink-0">
+                <img 
+                  src={currentPodcast.imageUrl} 
+                  alt={currentPodcast.title}
+                  className="h-12 w-12 sm:h-12 sm:w-12 rounded object-cover"
+                  onError={(e) => {
+                    console.error('Failed to load track artwork:', currentPodcast.imageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                  onLoad={() => {
+                    console.log('Track artwork loaded successfully:', currentPodcast.imageUrl);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="h-12 w-12 sm:h-12 sm:w-12 rounded bg-gray-800 flex items-center justify-center flex-shrink-0">
+                <Play className="h-6 w-6 text-gray-400" />
+              </div>
+            )}
+            <div className="min-w-0 text-left">
+              <h4 className="font-medium text-sm sm:text-sm truncate text-white">{currentPodcast.title}</h4>
+              <p className="text-xs text-gray-400 truncate">{currentPodcast.author}</p>
             </div>
-            <div className="text-white/70 text-sm truncate">
-              {currentPodcast.author}
-            </div>
-          </div>
-        </div>
+          </button>
 
-        {/* Player Controls */}
-        <div className="flex items-center gap-2 flex-1 justify-center">
-          <button
-            onClick={playPrevious}
-            className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-full transition-all duration-200 flex items-center justify-center"
-            style={{'--hover-bg': 'var(--hover-bg)'} as React.CSSProperties}
-          >
-            <SkipBack size={20} />
-          </button>
-          
-          <button
-            onClick={handlePlayPause}
-            className="w-12 h-12 mx-3 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105"
-            style={{
-              background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
-              color: 'var(--dark-bg)',
-              boxShadow: `0 4px 12px var(--glow-color)`
-            }}
-          >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </button>
-          
-          <button
-            onClick={playNext}
-            className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-full transition-all duration-200 flex items-center justify-center"
-          >
-            <SkipForward size={20} />
-          </button>
-        </div>
-
-        {/* Progress Section */}
-        <div className="flex items-center gap-3 flex-1 max-w-xs">
-          <div className="text-white/60 text-xs min-w-[40px] text-center">
-            {formatTime(currentTime)}
-          </div>
-          
-          <div 
-            className="progress-bar flex-1 h-1.5 bg-white/10 rounded-full relative cursor-pointer overflow-hidden group"
-            onClick={handleProgressClick}
-          >
-            <div 
-              className="progress-fill h-full rounded-full relative transition-all duration-100"
-              style={{
-                background: `linear-gradient(90deg, var(--primary-color), var(--secondary-color))`,
-                width: `${progressPercentage}%`
-              }}
-            />
-          </div>
-          
-          <div className="text-white/60 text-xs min-w-[40px] text-center">
-            {formatTime(duration)}
-          </div>
-        </div>
-
-        {/* Volume & Auto-play */}
-        <div className="flex items-center gap-2 min-w-[120px]">
-          <button
-            onClick={handleVolumeToggle}
-            className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-full transition-all duration-200"
-          >
-            {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
-          </button>
-          
-          <div 
-            className="w-20 h-1 bg-white/10 rounded-full relative cursor-pointer"
-            onClick={handleVolumeClick}
-          >
-            <div 
-              className="h-full rounded-full transition-all duration-100"
-              style={{
-                background: `linear-gradient(90deg, var(--primary-color), var(--secondary-color))`,
-                width: `${volumePercentage}%`
-              }}
-            />
-          </div>
-          
-          <div 
-            className={`relative w-10 h-5 rounded-full cursor-pointer transition-all duration-300 ml-2 ${
-              autoPlay ? 'bg-gradient-to-r' : 'bg-white/10'
-            }`}
-            style={autoPlay ? {
-              background: `linear-gradient(90deg, var(--primary-color), var(--secondary-color))`
-            } : undefined}
-            onClick={() => setAutoPlay(!autoPlay)}
-          >
-            <div 
-              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${
-                autoPlay ? 'transform translate-x-5' : 'transform translate-x-0.5'
+          {/* Controls */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button variant="ghost" size="icon" onClick={playPrevious} className="h-10 w-10 sm:h-9 sm:w-9 touch-manipulation text-gray-400 hover:text-white hover:bg-white/10">
+              <SkipBack className="h-5 w-5 sm:h-4 sm:w-4" />
+            </Button>
+            
+            <Button 
+              onClick={handlePlayPause} 
+              size="icon" 
+              className={`h-10 w-10 sm:h-9 sm:w-9 touch-manipulation ${
+                isIOS && autoplayBlocked && !hasUserInteracted ? 'animate-pulse bg-red-600 hover:bg-red-500' : 'bg-red-600 hover:bg-red-500 text-white'
               }`}
+            >
+              {isPlaying ? (
+                <Pause className="h-5 w-5 sm:h-4 sm:w-4" />
+              ) : (
+                <Play className="h-5 w-5 sm:h-4 sm:w-4" />
+              )}
+            </Button>
+            
+            <Button variant="ghost" size="icon" onClick={playNext} className="h-10 w-10 sm:h-9 sm:w-9 touch-manipulation text-gray-400 hover:text-white hover:bg-white/10">
+              <SkipForward className="h-5 w-5 sm:h-4 sm:w-4" />
+            </Button>
+          </div>
+
+          {/* Progress */}
+          <div className="flex items-center gap-2 flex-1 max-w-md group">
+            <button 
+              onClick={() => setShowNowPlaying(true)}
+              className="text-xs text-gray-400 w-8 sm:w-10 text-right hover:text-white transition-colors touch-manipulation"
+            >
+              {formatTime(currentTime)}
+            </button>
+            <div className="flex-1 relative">
+              <Slider
+                value={[currentTime]}
+                max={duration || 100}
+                step={1}
+                onValueChange={handleSeek}
+                className="flex-1 [&_.slider-thumb]:h-5 [&_.slider-thumb]:w-5 sm:[&_.slider-thumb]:h-4 sm:[&_.slider-thumb]:w-4 [&_.slider-track]:h-2 sm:[&_.slider-track]:h-1.5"
+              />
+            </div>
+            <button 
+              onClick={() => setShowNowPlaying(true)}
+              className="text-xs text-gray-400 w-8 sm:w-10 hover:text-white transition-colors touch-manipulation"
+            >
+              {formatTime(duration)}
+            </button>
+          </div>
+
+          {/* Volume - Hidden on mobile to save space */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={handleMute} className="text-gray-400 hover:text-white hover:bg-white/10">
+              {isMuted || volume === 0 ? (
+                <VolumeX className="h-4 w-4" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
+            </Button>
+            <Slider
+              value={[isMuted ? 0 : volume]}
+              max={1}
+              step={0.1}
+              onValueChange={handleVolumeChange}
+              className="w-20"
             />
           </div>
+
+          {/* Auto-Play Toggle */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Switch 
+              id="autoplay-switch" 
+              checked={autoPlay} 
+              onCheckedChange={(checked) => {
+                console.log('🎵 Autoplay toggle changed to:', checked);
+                setAutoPlay(checked);
+              }} 
+            />
+            <label htmlFor="autoplay-switch" className="text-xs text-gray-400 select-none cursor-pointer">
+              Auto-Play {autoPlay ? '✓' : '✗'}
+            </label>
+          </div>
+          
+          {/* Mobile volume button only */}
+          <div className="sm:hidden">
+            <Button variant="ghost" size="icon" onClick={handleMute} className="h-10 w-10 touch-manipulation text-gray-400 hover:text-white hover:bg-white/10">
+              {isMuted || volume === 0 ? (
+                <VolumeX className="h-5 w-5" />
+              ) : (
+                <Volume2 className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
-
-        {/* Hidden audio element */}
-        <audio ref={audioRef} preload="metadata" />
       </div>
-
-      {/* Now Playing Modal */}
-      {showNowPlaying && (
-        <NowPlayingModal 
-          isOpen={showNowPlaying} 
-          onClose={() => setShowNowPlaying(false)} 
-        />
-      )}
-    </>
+      
+      <NowPlayingModal 
+        open={showNowPlaying} 
+        onOpenChange={setShowNowPlaying} 
+      />
+    </Card>
   );
 }

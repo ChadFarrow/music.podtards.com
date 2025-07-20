@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { Play, Music, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Play, Music } from 'lucide-react';
-import { ImageWithFallback } from '@/components/ImageWithFallback';
+import { useRef, useState, useEffect } from 'react';
 
 interface PodRollItem {
   feedGuid?: string;
@@ -169,13 +168,12 @@ export function AlbumRecommendations({ podroll, currentFeedUrl }: AlbumRecommend
               <div className="relative w-48">
                 <div className="w-48 h-48 bg-gray-800 rounded-xl shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105 flex items-center justify-center">
                   {recommendation.image ? (
-                    <ImageWithFallback
+                    <img
                       src={recommendation.image}
                       alt={recommendation.title}
                       className="w-full h-full object-cover rounded-xl"
-                      width={192}
-                      height={192}
-                      fallback="🎵"
+                      onLoad={() => console.log('🖼️ Image loaded:', recommendation.title, recommendation.image)}
+                      onError={(e) => console.log('❌ Image failed:', recommendation.title, recommendation.image, e)}
                     />
                   ) : (
                     <Music className="h-16 w-16 text-gray-400" />

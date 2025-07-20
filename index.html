@@ -21,7 +21,7 @@
     
     <!-- Icons and Manifest -->
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=106">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=106">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=106">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -32,16 +32,17 @@
     
     <!-- Social Media / SEO -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Podtardstr Music" />
-    <meta property="og:description" content="Discover and stream featured albums with Value4Value Lightning payments" />
-    <meta property="og:url" content="https://music.podtards.com" />
-    <meta property="og:image" content="/icon-512.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Podtardstr Music" />
-    <meta name="twitter:description" content="Discover and stream featured albums with Value4Value Lightning payments" />
-    <meta name="twitter:image" content="/icon-512.png" />
+    <meta property="og:title" content="Podtardstr" />
+    <meta property="og:description" content="Podtardstr where music meets Nostr - discover and stream music with Value4Value" />
+    <meta property="og:url" content="https://podtardstr.vercel.app/" />
+    <meta property="og:image" content="https://podtardstr.vercel.app/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Podtardstr" />
+    <meta name="twitter:description" content="Podtardstr where music meets Nostr - discover and stream music with Value4Value" />
+    <meta name="twitter:image" content="https://podtardstr.vercel.app/icon-512.png" />
     
-    <!-- Security headers removed for debugging - will be added back via Vercel config -->
+    <!-- Security -->
+    <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-src 'self' https:; font-src 'self'; base-uri 'self'; manifest-src 'self'; connect-src 'self' blob: https: wss: http:; img-src 'self' data: blob: https: http:; media-src 'self' https: http:; worker-src 'self' blob:;">
   </head>
   <body>
     <div id="root"></div>

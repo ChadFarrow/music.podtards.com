@@ -1,37 +1,47 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AlbumGallery } from './components/AlbumGallery';
-import { AlbumViewEnhanced } from './components/AlbumViewEnhanced';
-import { ScrollToTop } from './components/ScrollToTop';
-import { PodcastPlayer } from './components/PodcastPlayer';
-import { ThemeDemo } from './components/ThemeDemo';
+// NOTE: This file should normally not be modified unless you are adding a new provider.
+// To add new routes, edit the AppRouter.tsx file.
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createHead, UnheadProvider } from '@unhead/react/client';
+import { InferSeoMetaPlugin } from '@unhead/addons';
+import { Suspense } from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import AppRouter from './AppRouter';
+
+const head = createHead({
+  plugins: [
+    InferSeoMetaPlugin(),
+  ],
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 6 * 60 * 60 * 1000, // 6 hours
-      gcTime: 24 * 60 * 60 * 1000, // 24 hours
+      refetchOnWindowFocus: false,
+      staleTime: 60000, // 1 minute
+      gcTime: Infinity,
     },
   },
 });
 
-function App() {
+export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <ScrollToTop />
-        <div className="min-h-screen bg-black text-white">
-          <ThemeDemo />
-          <Routes>
-            <Route path="/" element={<AlbumGallery />} />
-            <Route path="/albums" element={<AlbumGallery />} />
-            <Route path="/albums/:albumSlug" element={<AlbumViewEnhanced />} />
-          </Routes>
-          <PodcastPlayer />
-        </div>
-      </Router>
-    </QueryClientProvider>
+    <UnheadProvider head={head}>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Suspense>
+              <AppRouter />
+            </Suspense>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </UnheadProvider>
   );
 }
 
