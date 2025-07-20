@@ -23,6 +23,7 @@ export interface AlbumFeedData {
   publisherFeed?: PublisherFeed;
   tracks: AlbumTrack[];
   podroll?: PodRollItem[];
+  publisherAlbums?: PodRollItem[];
   value?: {
     model: {
       type: string;
@@ -71,6 +72,7 @@ async function fetchAlbumFeed(feedUrl: string): Promise<AlbumFeedData> {
       publisherFeed: parsedFeed.publisherFeed,
       tracks: [],
       podroll: parsedFeed.podroll,
+      publisherAlbums: parsedFeed.publisherAlbums,
       value: parsedFeed.value ? {
         model: {
           type: parsedFeed.value.type || 'lightning',

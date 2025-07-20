@@ -4,6 +4,7 @@ import { AlbumHero } from '@/components/AlbumHero';
 import { TrackList } from '@/components/TrackList';
 import { AlbumRecommendations } from '@/components/AlbumRecommendations';
 import { PublisherFeedItems } from '@/components/PublisherFeedItems';
+import { PublisherAlbums } from '@/components/PublisherAlbums';
 import { useAlbumControls } from '@/components/AlbumControls';
 import { AlbumNavigation } from '@/components/AlbumNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -196,7 +197,20 @@ export function AlbumViewEnhanced({ feedUrl }: AlbumViewEnhancedProps) {
         currentFeedUrl={currentFeedUrl}
       />
 
-      {albumData.publisherFeed && (
+      {/* Show publisher albums if this is a publisher feed */}
+      {albumData.publisherAlbums && (
+        <div className="px-8 py-12">
+          <div className="max-w-6xl mx-auto">
+            <PublisherAlbums
+              albums={albumData.publisherAlbums}
+              currentFeedUrl={currentFeedUrl}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Show publisher feed items if this is an individual album with a publisher feed */}
+      {albumData.publisherFeed && !albumData.publisherAlbums && (
         <div className="px-8 py-12">
           <div className="max-w-6xl mx-auto">
             <PublisherFeedItems

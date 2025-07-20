@@ -49,6 +49,8 @@ export interface ParsedFeed {
   podroll?: PodRollItem[];
   funding?: FundingInfo;
   episodes: ParsedEpisode[];
+  // For publisher feeds, these are the individual albums
+  publisherAlbums?: PodRollItem[];
 }
 
 export interface ParsedEpisode {
@@ -154,6 +156,13 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
     funding: parseFunding(channel),
     episodes: []
   };
+
+  // Check if this is a publisher feed (has podcast:medium="publisher")
+  const medium = channel.querySelector('podcast\\:medium')?.textContent?.trim();
+  if (medium === 'publisher') {
+    console.log('🏢 Detected publisher feed, parsing remoteItem albums...');
+    feed.publisherAlbums = await parsePublisherAlbums(channel);
+  }
 
   // Parse episodes
   const items = channel.querySelectorAll('item');
@@ -436,6 +445,71 @@ async function parsePodRoll(element: Element): Promise<PodRollItem[] | undefined
   }
   
   return podrollItems.length > 0 ? podrollItems : undefined;
+}
+
+/**
+ * Parses podcast:remoteItem elements with medium="music" to extract individual album information from a publisher feed
+ */
+async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
+  console.log('🏢 parsePublisherAlbums: Starting publisher albums parsing...');
+  
+  // Look for podcast:remoteItem with medium="music" (these are the individual albums)
+  const albumItems = element.querySelectorAll('podcast\\:remoteItem, remoteItem');
+  console.log('🏢 parsePublisherAlbums: Found', albumItems.length, 'remoteItem elements');
+  
+  const albums: PodRollItem[] = [];
+  
+  for (const item of Array.from(albumItems)) {
+    const medium = item.getAttribute('medium');
+    console.log('🏢 parsePublisherAlbums: Checking remoteItem with medium:', medium);
+    
+    if (medium === 'music') {
+      const feedGuid = item.getAttribute('feedGuid') || undefined;
+      const feedUrl = item.getAttribute('feedUrl') || undefined;
+      
+      if (feedGuid || feedUrl) {
+        console.log('🏢 parsePublisherAlbums: Found album:', {
+          feedGuid: feedGuid?.substring(0, 20) + '...',
+          feedUrl: feedUrl?.substring(0, 50) + '...'
+        });
+        
+        // Try to fetch album details from the individual feed
+        let title = 'Unknown Album';
+        let description = '';
+        let image = '';
+        let author = '';
+        
+        if (feedUrl) {
+          try {
+            console.log('🏢 Fetching album details from:', feedUrl);
+            const { fetchAndParseFeed } = await import('@/lib/feed-parser');
+            const albumFeed = await fetchAndParseFeed(feedUrl);
+            
+            title = albumFeed.title || 'Unknown Album';
+            description = albumFeed.description || '';
+            image = albumFeed.image || '';
+            author = albumFeed.author || '';
+            
+            console.log('🏢 Album details fetched:', { title, author });
+          } catch (error) {
+            console.error('🏢 Failed to fetch album details:', error);
+          }
+        }
+        
+        albums.push({
+          feedGuid,
+          feedUrl,
+          title,
+          description,
+          image,
+          author
+        });
+      }
+    }
+  }
+  
+  console.log('🏢 parsePublisherAlbums: Found', albums.length, 'albums');
+  return albums;
 }
 
 /**
