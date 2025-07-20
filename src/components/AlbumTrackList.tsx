@@ -5,6 +5,7 @@ import { usePodcastPlayer } from '@/hooks/usePodcastPlayer';
 import { useMusicPlayback } from '@/hooks/useMusicPlayback';
 import { htmlToText } from '@/lib/html-utils';
 import type { AlbumTrack } from '@/hooks/useAlbumFeed';
+import { getProxiedAudioUrl } from '@/lib/audio-proxy';
 // import type { PodcastIndexPodcast } from '@/hooks/usePodcastIndex';
 
 interface AlbumTrackListProps {
@@ -42,7 +43,7 @@ export function AlbumTrackList({ tracks, albumArtist }: AlbumTrackListProps) {
       id: trackId,
       title: track.title,
       author: track.albumArtist || albumArtist,
-      url: track.enclosureUrl,
+      url: getProxiedAudioUrl(track.enclosureUrl),
       imageUrl: track.albumArt || track.image,
       duration: track.duration,
     };

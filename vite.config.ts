@@ -57,6 +57,20 @@ export default defineConfig(() => {
             });
           },
         },
+        // Proxy audio requests to local development server
+        '/api/audio-proxy': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, res) => {
+              console.error('❌ Audio proxy error:', err);
+              if (res && !res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Audio proxy server unavailable' }));
+              }
+            });
+          },
+        },
       },
     },
     plugins: [

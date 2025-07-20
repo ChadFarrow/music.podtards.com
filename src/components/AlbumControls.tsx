@@ -1,6 +1,7 @@
 import { usePodcastPlayer } from '@/hooks/usePodcastPlayer';
 // import { useMusicPlayback } from '@/hooks/useMusicPlayback';
 import type { AlbumTrack } from '@/hooks/useAlbumFeed';
+import { getProxiedAudioUrl } from '@/lib/audio-proxy';
 
 interface AlbumControlsProps {
   albumData: {
@@ -54,7 +55,7 @@ export function useAlbumControls({ albumData }: AlbumControlsProps) {
       id: t.id.toString(),
       title: t.title,
       author: t.albumArtist || albumData?.artist || '',
-      url: t.enclosureUrl,
+      url: getProxiedAudioUrl(t.enclosureUrl),
       imageUrl: t.albumArt || t.image || albumData?.artwork || '',
       duration: t.duration,
     })) || [];
@@ -99,7 +100,7 @@ export function useAlbumControls({ albumData }: AlbumControlsProps) {
       id: track.id.toString(),
       title: track.title,
       author: track.albumArtist || albumData.artist,
-      url: track.enclosureUrl,
+      url: getProxiedAudioUrl(track.enclosureUrl),
       imageUrl: track.albumArt || track.image || albumData.artwork,
       duration: track.duration,
     }));
