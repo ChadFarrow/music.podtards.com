@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import crypto from 'crypto';
+import { createHash } from 'crypto';
 
 // In-memory cache for development (Vercel will handle caching in production)
 const cache = new Map<string, { data: string; etag: string; timestamp: number }>();
@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Generate cache key
-    const cacheKey = crypto.createHash('md5').update(url).digest('hex');
+    const cacheKey = createHash('md5').update(url).digest('hex');
     
     // Check cache first
     const cached = cache.get(cacheKey);
@@ -125,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Generate ETag for caching
-    const etag = crypto.createHash('md5').update(text).digest('hex');
+    const etag = createHash('md5').update(text).digest('hex');
     
     // Cache the response
     cache.set(cacheKey, {
