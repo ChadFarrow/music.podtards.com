@@ -542,18 +542,6 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
               )}
             </button>
           )}
-          
-          {/* Logo and title */}
-          <div className="flex items-center gap-2">
-            <img 
-              src="/logo.png" 
-              alt="Podtardstr" 
-              className="w-8 h-8 object-contain"
-            />
-            <span className={`font-bold text-lg hidden sm:inline ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Podtardstr
-            </span>
-          </div>
         </div>
         
         <div className="flex items-center gap-4">

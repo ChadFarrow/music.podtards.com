@@ -150,16 +150,9 @@ export function NavigationSidebar() {
           background: 'rgba(255, 255, 255, 0.02)'
         }}
       >
-        <div className="flex items-center gap-3">
-          <img 
-            src="/logo.png" 
-            alt="Podtardstr" 
-            className="w-10 h-10 object-contain"
-          />
-          <h2 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.5px' }}>
-            Podtardstr
-          </h2>
-        </div>
+        <h2 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.5px' }}>
+          Navigation
+        </h2>
         <button
           onClick={handleClose}
           className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:scale-105"

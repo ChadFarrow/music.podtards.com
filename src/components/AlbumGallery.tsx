@@ -26,17 +26,10 @@ export function AlbumGallery({ albums }: AlbumGalleryProps) {
       }}
     >
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col items-center mb-8">
-          <img 
-            src="/logo.png" 
-            alt="Podtardstr" 
-            className="w-24 h-24 sm:w-32 sm:h-32 object-contain mb-4"
-          />
-          <h1 className="text-4xl font-bold mb-4 text-center">All Albums</h1>
-          <p className="text-lg text-gray-300 text-center max-w-3xl mx-auto">
-            A collection of V4V albums from The Doerfels, Friends of the band and albums our producers enjoy
-          </p>
-        </div>
+        <h1 className="text-4xl font-bold mb-4 text-center">All Albums</h1>
+        <p className="text-lg text-gray-300 mb-8 text-center max-w-3xl mx-auto">
+          A collection of V4V albums from The Doerfels, Friends of the band and albums our producers enjoy
+        </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {albums.map((album) => (
