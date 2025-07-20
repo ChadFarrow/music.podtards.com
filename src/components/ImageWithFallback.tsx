@@ -19,55 +19,28 @@ export function ImageWithFallback({
   height = 200
 }: ImageWithFallbackProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
-  const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!src) {
-      setHasError(true);
-      setIsLoading(false);
+      createFallbackImage();
       return;
     }
 
     setIsLoading(true);
-    setHasError(false);
 
-    // Check if the image URL is from an external domain that might have CORS issues
+    // Check if the image URL is from an external domain
     const isExternalImage = src.startsWith('http') && !src.includes(window.location.hostname);
     
     if (isExternalImage) {
-      // For external images, try to load them with error handling
-      const img = new Image();
-      
-      // Set up error handling before setting src to avoid CORS errors in console
-      img.onload = () => {
-        setImgSrc(src);
-        setIsLoading(false);
-        setHasError(false);
-      };
-      
-      img.onerror = () => {
-        // Silently handle error and create fallback
-        createFallbackImage();
-      };
-      
-      // Set crossOrigin to anonymous to try to avoid CORS issues
-      img.crossOrigin = 'anonymous';
-      img.src = src;
-      
-      // Set a timeout to prevent hanging
-      const timeout = setTimeout(() => {
-        if (isLoading) {
-          createFallbackImage();
-        }
-      }, 3000);
-      
-      return () => clearTimeout(timeout);
+      // For external images, skip loading entirely and go straight to fallback
+      // This prevents CORS errors from appearing in the console
+      createFallbackImage();
     } else {
-      // For same-origin images, load directly
+      // For same-origin images, load normally
       setImgSrc(src);
     }
-  }, [src, isLoading]);
+  }, [src]);
 
   const createFallbackImage = () => {
     // Create a fallback data URL with the emoji
@@ -95,28 +68,18 @@ export function ImageWithFallback({
     const fallbackDataUrl = canvas.toDataURL();
     setImgSrc(fallbackDataUrl);
     setIsLoading(false);
-    setHasError(false);
   };
 
   const handleLoad = () => {
     setIsLoading(false);
-    setHasError(false);
   };
 
   const handleError = () => {
-    // Only create fallback if we haven't already
+    // If same-origin image fails, create fallback
     if (!imgSrc.includes('data:image')) {
       createFallbackImage();
     }
   };
-
-  if (hasError && !imgSrc) {
-    return (
-      <div className={cn('flex items-center justify-center bg-gray-800 text-gray-400 text-4xl', className)}>
-        {fallback}
-      </div>
-    );
-  }
 
   return (
     <>
@@ -134,7 +97,6 @@ export function ImageWithFallback({
         loading="lazy"
         onLoad={handleLoad}
         onError={handleError}
-        crossOrigin="anonymous"
       />
     </>
   );
