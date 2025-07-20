@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Home, 
   X, 
   Disc, 
   Folder, 
@@ -118,11 +117,6 @@ export function NavigationSidebar() {
     setOpenMobile(false);
   };
 
-  // Handle back to main app
-  const handleBackToMain = () => {
-    navigate('/');
-    setOpenMobile(false);
-  };
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -237,44 +231,6 @@ export function NavigationSidebar() {
 
         {/* Content */}
         <div className="flex-1 p-4 flex flex-col gap-2">
-          {/* Back to Main App */}
-          <button
-            onClick={handleBackToMain}
-            className="nav-item nav-item-shimmer flex items-center p-4 rounded-xl transition-all duration-300 relative overflow-hidden mb-4"
-            style={{
-              color: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              background: 'rgba(255, 255, 255, 0.03)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.color = '#ffffff';
-              e.currentTarget.style.transform = 'translateX(4px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
-              e.currentTarget.style.transform = 'translateX(0)';
-            }}
-          >
-            <div className="w-5 h-5 mr-4 flex items-center justify-center flex-shrink-0">
-              <Home size={20} />
-            </div>
-            <span className="flex-1 text-left text-base font-medium">
-              Back to Main App
-            </span>
-          </button>
-
-          {/* Section Divider */}
-          <div 
-            className="h-px my-3"
-            style={{
-              background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)'
-            }}
-          />
-
           {/* Navigation Items */}
           {navigationItems.map((item, index) => {
             const Icon = item.icon;
