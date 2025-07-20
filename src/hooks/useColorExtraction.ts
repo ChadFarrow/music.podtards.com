@@ -55,57 +55,84 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
     }
   };
 
-  // Function to try proxy-based color extraction
+  // Function to try proxy-based color extraction with multiple fallbacks
   const tryProxyColorExtraction = async (): Promise<void> => {
     if (!imageUrl) return;
     
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
-    console.log('🎨 Trying CORS proxy:', proxyUrl);
+    const proxies = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`,
+      `https://cors-anywhere.herokuapp.com/${imageUrl}`,
+      `https://thingproxy.freeboard.io/fetch/${imageUrl}`,
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(imageUrl)}`
+    ];
     
-    return new Promise<void>((resolve) => {
-      const proxyImg = new Image();
-      proxyImg.crossOrigin = 'anonymous';
+    for (let i = 0; i < proxies.length; i++) {
+      const proxyUrl = proxies[i];
+      console.log(`🎨 Trying CORS proxy ${i + 1}/${proxies.length}:`, proxyUrl);
       
-      proxyImg.onload = () => {
-        try {
-          const colorThief = new ColorThief();
-          const dominantColor = colorThief.getColor(proxyImg);
-          const palette = colorThief.getPalette(proxyImg, 5);
+      try {
+        const success = await new Promise<boolean>((resolve) => {
+          const proxyImg = new Image();
+          proxyImg.crossOrigin = 'anonymous';
           
-          const enhancedDominant = enhanceColor(dominantColor);
-          const enhancedPalette = palette.map(enhanceColor);
-
-          const primary = rgbToHex(enhancedDominant);
-          const paletteHex = enhancedPalette.map(rgbToHex);
+          const timeout = setTimeout(() => {
+            console.log(`🎨 Proxy ${i + 1} timed out`);
+            resolve(false);
+          }, 10000); // 10 second timeout
           
-          const secondary = paletteHex[1] || primary;
-          const accent = paletteHex[2] || secondary;
+          proxyImg.onload = () => {
+            clearTimeout(timeout);
+            try {
+              const colorThief = new ColorThief();
+              const dominantColor = colorThief.getColor(proxyImg);
+              const palette = colorThief.getPalette(proxyImg, 5);
+              
+              const enhancedDominant = enhanceColor(dominantColor);
+              const enhancedPalette = palette.map(enhanceColor);
 
-          const extractedColors = {
-            primary,
-            secondary,
-            accent,
-            palette: paletteHex
+              const primary = rgbToHex(enhancedDominant);
+              const paletteHex = enhancedPalette.map(rgbToHex);
+              
+              const secondary = paletteHex[1] || primary;
+              const accent = paletteHex[2] || secondary;
+
+              const extractedColors = {
+                primary,
+                secondary,
+                accent,
+                palette: paletteHex
+              };
+              
+              console.log(`🎨 Colors extracted successfully via proxy ${i + 1}:`, extractedColors);
+              setColors(extractedColors);
+              setCachedColors(imageUrl, extractedColors);
+              resolve(true);
+            } catch (error) {
+              console.error(`🎨 Failed to extract colors via proxy ${i + 1}:`, error);
+              resolve(false);
+            }
           };
           
-          console.log('🎨 Colors extracted successfully via proxy:', extractedColors);
-          setColors(extractedColors);
-          setCachedColors(imageUrl, extractedColors);
-        } catch (error) {
-          console.error('🎨 Failed to extract colors via proxy:', error);
-          setFallbackColors();
+          proxyImg.onerror = () => {
+            clearTimeout(timeout);
+            console.log(`🎨 Proxy ${i + 1} failed`);
+            resolve(false);
+          };
+          
+          proxyImg.src = proxyUrl;
+        });
+        
+        if (success) {
+          return; // Success, exit early
         }
-        resolve();
-      };
-      
-      proxyImg.onerror = () => {
-        console.log('🎨 CORS proxy also failed, using fallback colors for:', imageUrl);
-        setFallbackColors();
-        resolve();
-      };
-      
-      proxyImg.src = proxyUrl;
-    });
+      } catch (error) {
+        console.error(`🎨 Error with proxy ${i + 1}:`, error);
+      }
+    }
+    
+    // All proxies failed
+    console.log('🎨 All CORS proxies failed, using fallback colors for:', imageUrl);
+    setFallbackColors();
   };
 
   useEffect(() => {
@@ -177,9 +204,10 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
           }
         };
 
-        img.onerror = () => {
+        img.onerror = async () => {
           console.log('🎨 Direct image load failed, trying CORS proxy for:', imageUrl);
-          tryProxyColorExtraction();
+          await tryProxyColorExtraction();
+          setIsLoading(false);
         };
 
         // Try direct load first

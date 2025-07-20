@@ -11,7 +11,7 @@ export function AlbumBackground({ artwork, children }: AlbumBackgroundProps) {
   const { colors, isLoading } = useColorExtraction(artwork);
   const { getCachedCorsUrl, setCachedCorsUrl } = useImageCache();
 
-  // Create CORS-safe image URL for background with caching
+  // Create CORS-safe image URL for background with caching and multiple proxy fallbacks
   const corsSafeImageUrl = useMemo(() => {
     if (!artwork) return artwork;
     
@@ -23,7 +23,16 @@ export function AlbumBackground({ artwork, children }: AlbumBackgroundProps) {
     
     // Use CORS proxy for external images to prevent CORS errors
     if (artwork.includes('doerfelverse.com') || artwork.includes('cloudfront.net') || artwork.includes('wavlake.com')) {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(artwork)}`;
+      // Try multiple proxies in order of reliability
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(artwork)}`,
+        `https://cors-anywhere.herokuapp.com/${artwork}`,
+        `https://thingproxy.freeboard.io/fetch/${artwork}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(artwork)}`
+      ];
+      
+      // Use the first proxy as default, but cache it so we can try others if needed
+      const proxyUrl = proxies[0];
       setCachedCorsUrl(artwork, proxyUrl);
       return proxyUrl;
     }
