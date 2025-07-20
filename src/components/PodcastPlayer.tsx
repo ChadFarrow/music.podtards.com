@@ -56,11 +56,11 @@ export function PodcastPlayer() {
     '--primary-color': themeColors.primary,
     '--secondary-color': themeColors.secondary,
     '--accent-color': themeColors.accent,
-    '--primary-light': themeColors.primaryLight || themeColors.primary,
-    '--secondary-light': themeColors.secondaryLight || themeColors.secondary,
-    '--dark-bg': themeColors.darkBg || '#0f3460',
-    '--glow-color': themeColors.glow || 'rgba(64, 224, 208, 0.4)',
-    '--hover-bg': themeColors.hover || 'rgba(64, 224, 208, 0.1)'
+    '--primary-light': themeColors.primary,
+    '--secondary-light': themeColors.secondary,
+    '--dark-bg': '#0f3460',
+    '--glow-color': 'rgba(64, 224, 208, 0.4)',
+    '--hover-bg': 'rgba(64, 224, 208, 0.1)'
   } as React.CSSProperties;
 
   // Detect iOS
@@ -201,16 +201,47 @@ export function PodcastPlayer() {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         .now-playing-bar {
           --primary-color: ${themeColors.primary};
           --secondary-color: ${themeColors.secondary};
           --accent-color: ${themeColors.accent};
-          --primary-light: ${themeColors.primaryLight || themeColors.primary};
-          --secondary-light: ${themeColors.secondaryLight || themeColors.secondary};
-          --dark-bg: ${themeColors.darkBg || '#0f3460'};
-          --glow-color: ${themeColors.glow || 'rgba(64, 224, 208, 0.4)'};
-          --hover-bg: ${themeColors.hover || 'rgba(64, 224, 208, 0.1)'};
+          --primary-light: ${themeColors.primary};
+          --secondary-light: ${themeColors.secondary};
+          --dark-bg: #0f3460;
+          --glow-color: rgba(64, 224, 208, 0.4);
+          --hover-bg: rgba(64, 224, 208, 0.1);
+        }
+
+        .progress-fill::after {
+          content: '';
+          position: absolute;
+          right: -2px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 12px;
+          height: 12px;
+          background: var(--primary-color);
+          border-radius: 50%;
+          box-shadow: 0 2px 6px var(--glow-color);
+          opacity: 0;
+          transition: opacity 0.2s ease, background 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .progress-bar:hover .progress-fill::after {
+          opacity: 1;
+        }
+
+        .album-art {
+          transition: all 0.5s ease;
+        }
+
+        .now-playing-bar {
+          transition: transform 0.3s ease;
+        }
+
+        .now-playing-bar:hover {
+          transform: scale(1.01);
         }
       `}</style>
 
@@ -236,7 +267,7 @@ export function PodcastPlayer() {
         {/* Track Info */}
         <div className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer" onClick={() => setShowNowPlaying(true)}>
           <div 
-            className="w-14 h-14 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 shadow-lg"
+            className="album-art w-14 h-14 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 shadow-lg"
             style={{
               background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
               boxShadow: `0 4px 12px var(--glow-color)`
@@ -303,24 +334,16 @@ export function PodcastPlayer() {
           </div>
           
           <div 
-            className="flex-1 h-1.5 bg-white/10 rounded-full relative cursor-pointer overflow-hidden group"
+            className="progress-bar flex-1 h-1.5 bg-white/10 rounded-full relative cursor-pointer overflow-hidden group"
             onClick={handleProgressClick}
           >
             <div 
-              className="h-full rounded-full relative transition-all duration-100"
+              className="progress-fill h-full rounded-full relative transition-all duration-100"
               style={{
                 background: `linear-gradient(90deg, var(--primary-color), var(--secondary-color))`,
                 width: `${progressPercentage}%`
               }}
-            >
-              <div 
-                className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 w-3 h-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{
-                  background: 'var(--primary-color)',
-                  boxShadow: `0 2px 6px var(--glow-color)`
-                }}
-              />
-            </div>
+            />
           </div>
           
           <div className="text-white/60 text-xs min-w-[40px] text-center">

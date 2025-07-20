@@ -5,6 +5,7 @@ import { AlbumGallery } from './components/AlbumGallery';
 import { AlbumViewEnhanced } from './components/AlbumViewEnhanced';
 import { ScrollToTop } from './components/ScrollToTop';
 import { PodcastPlayer } from './components/PodcastPlayer';
+import { ThemeDemo } from './components/ThemeDemo';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +22,7 @@ function App() {
       <Router>
         <ScrollToTop />
         <div className="min-h-screen bg-black text-white">
+          <ThemeDemo />
           <Routes>
             <Route path="/" element={<AlbumGallery />} />
             <Route path="/albums" element={<AlbumGallery />} />
