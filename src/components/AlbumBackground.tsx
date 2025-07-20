@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { useColorExtraction } from '@/hooks/useColorExtraction';
+import { useImageCache } from '@/hooks/useImageCache';
 
 interface AlbumBackgroundProps {
   artwork: string;
@@ -8,15 +9,26 @@ interface AlbumBackgroundProps {
 
 export function AlbumBackground({ artwork, children }: AlbumBackgroundProps) {
   const { colors, isLoading } = useColorExtraction(artwork);
+  const { getCachedCorsUrl, setCachedCorsUrl } = useImageCache();
 
-  // Create CORS-safe image URL for background
+  // Create CORS-safe image URL for background with caching
   const corsSafeImageUrl = useMemo(() => {
+    if (!artwork) return artwork;
+    
+    // Check cache first
+    const cachedUrl = getCachedCorsUrl(artwork);
+    if (cachedUrl) {
+      return cachedUrl;
+    }
+    
     // Use CORS proxy for external images to prevent CORS errors
-    if (artwork && (artwork.includes('doerfelverse.com') || artwork.includes('cloudfront.net') || artwork.includes('wavlake.com'))) {
-      return `https://api.allorigins.win/raw?url=${encodeURIComponent(artwork)}`;
+    if (artwork.includes('doerfelverse.com') || artwork.includes('cloudfront.net') || artwork.includes('wavlake.com')) {
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(artwork)}`;
+      setCachedCorsUrl(artwork, proxyUrl);
+      return proxyUrl;
     }
     return artwork;
-  }, [artwork]);
+  }, [artwork, getCachedCorsUrl, setCachedCorsUrl]);
 
 
 

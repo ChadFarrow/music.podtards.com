@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ColorThief from 'colorthief';
+import { useImageCache } from './useImageCache';
 
 interface ExtractedColors {
   primary: string;
@@ -11,6 +12,101 @@ interface ExtractedColors {
 export const useColorExtraction = (imageUrl: string | undefined) => {
   const [colors, setColors] = useState<ExtractedColors | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { getCachedColors, setCachedColors } = useImageCache();
+
+  // Helper function for color enhancement
+  const enhanceColor = (rgb: number[]) => {
+    const [r, g, b] = rgb;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+    const maxChannel = Math.max(r, g, b);
+    const minChannel = Math.min(r, g, b);
+    const saturation = maxChannel === 0 ? 0 : (maxChannel - minChannel) / maxChannel;
+    
+    if (saturation < 0.3 && luminance > 100) {
+      return [Math.min(255, r + 20), Math.min(255, g + 30), Math.min(255, b + 60)];
+    } else if (saturation < 0.3 && luminance <= 100) {
+      return [Math.min(255, r + 40), Math.min(255, g + 20), Math.min(255, b + 50)];
+    }
+    
+    const boostedR = Math.min(255, Math.round(r * 1.2));
+    const boostedG = Math.min(255, Math.round(g * 1.2));
+    const boostedB = Math.min(255, Math.round(b * 1.2));
+    
+    return [boostedR, boostedG, boostedB];
+  };
+
+  // Convert RGB arrays to hex strings
+  const rgbToHex = (rgb: number[]) => {
+    return `#${rgb.map(x => x.toString(16).padStart(2, '0')).join('')}`;
+  };
+
+  // Function to set fallback colors
+  const setFallbackColors = () => {
+    const fallbackColors = {
+      primary: '#6366f1',
+      secondary: '#8b5cf6',
+      accent: '#a855f7',
+      palette: ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe']
+    };
+    console.log('🎨 Using fallback colors:', fallbackColors);
+    setColors(fallbackColors);
+    if (imageUrl) {
+      setCachedColors(imageUrl, fallbackColors);
+    }
+  };
+
+  // Function to try proxy-based color extraction
+  const tryProxyColorExtraction = async (): Promise<void> => {
+    if (!imageUrl) return;
+    
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+    console.log('🎨 Trying CORS proxy:', proxyUrl);
+    
+    return new Promise<void>((resolve) => {
+      const proxyImg = new Image();
+      proxyImg.crossOrigin = 'anonymous';
+      
+      proxyImg.onload = () => {
+        try {
+          const colorThief = new ColorThief();
+          const dominantColor = colorThief.getColor(proxyImg);
+          const palette = colorThief.getPalette(proxyImg, 5);
+          
+          const enhancedDominant = enhanceColor(dominantColor);
+          const enhancedPalette = palette.map(enhanceColor);
+
+          const primary = rgbToHex(enhancedDominant);
+          const paletteHex = enhancedPalette.map(rgbToHex);
+          
+          const secondary = paletteHex[1] || primary;
+          const accent = paletteHex[2] || secondary;
+
+          const extractedColors = {
+            primary,
+            secondary,
+            accent,
+            palette: paletteHex
+          };
+          
+          console.log('🎨 Colors extracted successfully via proxy:', extractedColors);
+          setColors(extractedColors);
+          setCachedColors(imageUrl, extractedColors);
+        } catch (error) {
+          console.error('🎨 Failed to extract colors via proxy:', error);
+          setFallbackColors();
+        }
+        resolve();
+      };
+      
+      proxyImg.onerror = () => {
+        console.log('🎨 CORS proxy also failed, using fallback colors for:', imageUrl);
+        setFallbackColors();
+        resolve();
+      };
+      
+      proxyImg.src = proxyUrl;
+    });
+  };
 
   useEffect(() => {
     if (!imageUrl) {
@@ -21,6 +117,31 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
     const extractColors = async () => {
       setIsLoading(true);
       console.log('🎨 Starting color extraction for:', imageUrl);
+      
+      // Check cache first
+      const cachedColors = getCachedColors(imageUrl);
+      if (cachedColors) {
+        setColors(cachedColors);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Check if this is a known domain that doesn't support CORS
+      const knownCorsBlockedDomains = [
+        'doerfelverse.com',
+        'sirtjthewrathful.com',
+        'thisisjdog.com'
+      ];
+      
+      const shouldUseProxy = knownCorsBlockedDomains.some(domain => imageUrl.includes(domain));
+      
+      if (shouldUseProxy) {
+        console.log('🎨 Using proxy for known CORS-blocked domain:', imageUrl);
+        await tryProxyColorExtraction();
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const colorThief = new ColorThief();
         const img = new Image();
@@ -28,51 +149,15 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
         
         img.onload = () => {
           try {
-            // Get dominant color
             const dominantColor = colorThief.getColor(img);
-            
-            // Get color palette (5 colors)
             const palette = colorThief.getPalette(img, 5);
             
-            // Convert RGB arrays to hex strings
-            const rgbToHex = (rgb: number[]) => {
-              return `#${rgb.map(x => x.toString(16).padStart(2, '0')).join('')}`;
-            };
-
-            // Enhance colors for better visibility
-            const enhanceColor = (rgb: number[]) => {
-              const [r, g, b] = rgb;
-              // Calculate luminance to detect gray colors
-              const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-              
-              // If it's a very gray color (low saturation), add some color bias
-              const maxChannel = Math.max(r, g, b);
-              const minChannel = Math.min(r, g, b);
-              const saturation = maxChannel === 0 ? 0 : (maxChannel - minChannel) / maxChannel;
-              
-              if (saturation < 0.3 && luminance > 100) {
-                // Add blue bias for light grays
-                return [Math.min(255, r + 20), Math.min(255, g + 30), Math.min(255, b + 60)];
-              } else if (saturation < 0.3 && luminance <= 100) {
-                // Add purple bias for dark grays
-                return [Math.min(255, r + 40), Math.min(255, g + 20), Math.min(255, b + 50)];
-              }
-              
-              // Boost saturation for all colors
-              const boostedR = Math.min(255, Math.round(r * 1.2));
-              const boostedG = Math.min(255, Math.round(g * 1.2));
-              const boostedB = Math.min(255, Math.round(b * 1.2));
-              
-              return [boostedR, boostedG, boostedB];
-            };
-
             const enhancedDominant = enhanceColor(dominantColor);
             const enhancedPalette = palette.map(enhanceColor);
 
             const primary = rgbToHex(enhancedDominant);
             const paletteHex = enhancedPalette.map(rgbToHex);
             
-            // Use palette for variety
             const secondary = paletteHex[1] || primary;
             const accent = paletteHex[2] || secondary;
 
@@ -85,6 +170,7 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
             
             console.log('🎨 Colors extracted successfully:', extractedColors);
             setColors(extractedColors);
+            setCachedColors(imageUrl, extractedColors);
           } catch (error) {
             console.error('Error extracting colors:', error);
             setColors(null);
@@ -93,99 +179,11 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
 
         img.onerror = () => {
           console.log('🎨 Direct image load failed, trying CORS proxy for:', imageUrl);
-          // Try with CORS proxy as fallback
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
-          console.log('🎨 Trying CORS proxy:', proxyUrl);
-          
-          const proxyImg = new Image();
-          proxyImg.crossOrigin = 'anonymous';
-          
-          proxyImg.onload = () => {
-            try {
-              const colorThief = new ColorThief();
-              const dominantColor = colorThief.getColor(proxyImg);
-              const palette = colorThief.getPalette(proxyImg, 5);
-              
-              const rgbToHex = (rgb: number[]) => {
-                return `#${rgb.map(x => x.toString(16).padStart(2, '0')).join('')}`;
-              };
-
-              const enhanceColor = (rgb: number[]) => {
-                const [r, g, b] = rgb;
-                const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-                const maxChannel = Math.max(r, g, b);
-                const minChannel = Math.min(r, g, b);
-                const saturation = maxChannel === 0 ? 0 : (maxChannel - minChannel) / maxChannel;
-                
-                if (saturation < 0.3 && luminance > 100) {
-                  return [Math.min(255, r + 20), Math.min(255, g + 30), Math.min(255, b + 60)];
-                } else if (saturation < 0.3 && luminance <= 100) {
-                  return [Math.min(255, r + 40), Math.min(255, g + 20), Math.min(255, b + 50)];
-                }
-                
-                const boostedR = Math.min(255, Math.round(r * 1.2));
-                const boostedG = Math.min(255, Math.round(g * 1.2));
-                const boostedB = Math.min(255, Math.round(b * 1.2));
-                
-                return [boostedR, boostedG, boostedB];
-              };
-
-              const enhancedDominant = enhanceColor(dominantColor);
-              const enhancedPalette = palette.map(enhanceColor);
-
-              const primary = rgbToHex(enhancedDominant);
-              const paletteHex = enhancedPalette.map(rgbToHex);
-              
-              const secondary = paletteHex[1] || primary;
-              const accent = paletteHex[2] || secondary;
-
-              const extractedColors = {
-                primary,
-                secondary,
-                accent,
-                palette: paletteHex
-              };
-              
-              console.log('🎨 Colors extracted successfully via proxy:', extractedColors);
-              setColors(extractedColors);
-            } catch (error) {
-              console.error('🎨 Failed to extract colors via proxy:', error);
-              // Set fallback colors when all else fails
-              const fallbackColors = {
-                primary: '#6366f1',
-                secondary: '#8b5cf6',
-                accent: '#a855f7',
-                palette: ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe']
-              };
-              console.log('🎨 Using fallback colors:', fallbackColors);
-              setColors(fallbackColors);
-            }
-          };
-          
-          proxyImg.onerror = () => {
-            console.log('🎨 CORS proxy also failed, using fallback colors for:', imageUrl);
-            // Set fallback colors when all else fails
-            const fallbackColors = {
-              primary: '#6366f1',
-              secondary: '#8b5cf6',
-              accent: '#a855f7',
-              palette: ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe']
-            };
-            console.log('🎨 Using fallback colors:', fallbackColors);
-            setColors(fallbackColors);
-          };
-          
-          proxyImg.src = proxyUrl;
+          tryProxyColorExtraction();
         };
 
-        // Try direct load first (wrapped in try-catch to suppress CORS errors)
-        try {
-          img.src = imageUrl;
-        } catch (error) {
-          console.log('🎨 Direct image load failed immediately, trying CORS proxy for:', imageUrl);
-          // Trigger the onerror handler manually with a mock event
-          img.onerror?.(new Event('error'));
-        }
+        // Try direct load first
+        img.src = imageUrl;
       } catch (error) {
         console.error('Color extraction error:', error);
         setColors(null);
@@ -195,7 +193,7 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
     };
 
     extractColors();
-  }, [imageUrl]);
+  }, [imageUrl, getCachedColors, setCachedColors]);
 
   return { colors, isLoading };
 };
