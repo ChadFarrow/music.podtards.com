@@ -93,10 +93,76 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
 
         img.onerror = () => {
           console.error('🎨 Failed to load image for color extraction:', imageUrl);
-          setColors(null);
+          // Try with CORS proxy as fallback
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+          console.log('🎨 Trying CORS proxy:', proxyUrl);
+          
+          const proxyImg = new Image();
+          proxyImg.crossOrigin = 'anonymous';
+          
+          proxyImg.onload = () => {
+            try {
+              const colorThief = new ColorThief();
+              const dominantColor = colorThief.getColor(proxyImg);
+              const palette = colorThief.getPalette(proxyImg, 5);
+              
+              const rgbToHex = (rgb: number[]) => {
+                return `#${rgb.map(x => x.toString(16).padStart(2, '0')).join('')}`;
+              };
+
+              const enhanceColor = (rgb: number[]) => {
+                const [r, g, b] = rgb;
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+                const maxChannel = Math.max(r, g, b);
+                const minChannel = Math.min(r, g, b);
+                const saturation = maxChannel === 0 ? 0 : (maxChannel - minChannel) / maxChannel;
+                
+                if (saturation < 0.3 && luminance > 100) {
+                  return [Math.min(255, r + 20), Math.min(255, g + 30), Math.min(255, b + 60)];
+                } else if (saturation < 0.3 && luminance <= 100) {
+                  return [Math.min(255, r + 40), Math.min(255, g + 20), Math.min(255, b + 50)];
+                }
+                
+                const boostedR = Math.min(255, Math.round(r * 1.2));
+                const boostedG = Math.min(255, Math.round(g * 1.2));
+                const boostedB = Math.min(255, Math.round(b * 1.2));
+                
+                return [boostedR, boostedG, boostedB];
+              };
+
+              const enhancedDominant = enhanceColor(dominantColor);
+              const enhancedPalette = palette.map(enhanceColor);
+
+              const primary = rgbToHex(enhancedDominant);
+              const paletteHex = enhancedPalette.map(rgbToHex);
+              
+              const secondary = paletteHex[1] || primary;
+              const accent = paletteHex[2] || secondary;
+
+              const extractedColors = {
+                primary,
+                secondary,
+                accent,
+                palette: paletteHex
+              };
+              
+              console.log('🎨 Colors extracted successfully via proxy:', extractedColors);
+              setColors(extractedColors);
+            } catch (error) {
+              console.error('🎨 Failed to extract colors via proxy:', error);
+              setColors(null);
+            }
+          };
+          
+          proxyImg.onerror = () => {
+            console.error('🎨 CORS proxy also failed for:', imageUrl);
+            setColors(null);
+          };
+          
+          proxyImg.src = proxyUrl;
         };
 
-        // Handle CORS issues with a proxy or fallback
+        // Try direct load first
         img.src = imageUrl;
       } catch (error) {
         console.error('Color extraction error:', error);
