@@ -291,3 +291,40 @@ export function useAlbumFeed(feedUrl: string, options: { enabled?: boolean } = {
     retryDelay: 1000, // Wait 1 second between retries
   });
 }
+
+/**
+ * Hook to fetch publisher feed content
+ */
+export function usePublisherFeed(publisherFeed?: PublisherFeed, options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: ['publisher-feed', publisherFeed?.feedUrl, publisherFeed?.feedGuid],
+    queryFn: async () => {
+      if (!publisherFeed?.feedUrl) {
+        throw new Error('Publisher feed URL is required');
+      }
+
+      console.log('🏢 Fetching publisher feed:', publisherFeed.feedUrl);
+      
+      try {
+        // Import the feed parser
+        const { fetchAndParseFeed } = await import('@/lib/feed-parser');
+        const parsedFeed = await fetchAndParseFeed(publisherFeed.feedUrl);
+        
+        console.log('🏢 Publisher feed parsed:', {
+          title: parsedFeed.title,
+          episodeCount: parsedFeed.episodes.length,
+          hasValue: !!parsedFeed.value,
+          hasPodroll: !!parsedFeed.podroll
+        });
+
+        return parsedFeed;
+      } catch (error) {
+        console.error('🏢 Error fetching publisher feed:', error);
+        throw error;
+      }
+    },
+    enabled: options.enabled !== false && !!publisherFeed?.feedUrl,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    retry: 2,
+  });
+}

@@ -60,18 +60,12 @@ export function NavigationSidebar() {
   const [animationDelay, setAnimationDelay] = useState(0);
   const { currentPodcast } = usePodcastPlayer();
 
-  // Extract colors from current podcast artwork
-  const { colors } = useColorExtraction(currentPodcast?.imageUrl);
-
-  // Default color scheme (CityBeach theme)
-  const defaultColors = {
-    primary: '#40e0d0',
-    secondary: '#4fb3d9',
-    accent: '#5d8fef'
+  // Fixed color scheme matching your design
+  const themeColors = {
+    primary: '#667eea',
+    secondary: '#764ba2', 
+    accent: '#f093fb'
   };
-
-  // Use extracted colors or fall back to defaults
-  const themeColors = colors || defaultColors;
 
   // CSS custom properties style object
   const customProperties = {
@@ -130,10 +124,12 @@ export function NavigationSidebar() {
 
   return (
     <div 
-      className="navigation-sidebar w-full h-full flex flex-col overflow-hidden relative"
+      className="navigation-sidebar w-80 h-[600px] flex flex-col overflow-hidden relative rounded-[20px] border shadow-2xl"
       style={{
         background: 'rgba(17, 17, 17, 0.95)',
         backdropFilter: 'blur(20px)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         ...customProperties
       }}
@@ -142,19 +138,19 @@ export function NavigationSidebar() {
       <div 
         className="absolute top-0 left-0 right-0 h-0.5 opacity-80"
         style={{
-          background: 'var(--gradient)'
+          background: 'linear-gradient(90deg, #667eea, #764ba2, #f093fb)'
         }}
       />
 
       {/* Header */}
       <div 
-        className="flex items-center justify-between p-6 border-b"
+        className="flex items-center justify-between px-6 pt-6 pb-5 border-b"
         style={{
           borderBottomColor: 'rgba(255, 255, 255, 0.08)',
           background: 'rgba(255, 255, 255, 0.02)'
         }}
       >
-        <h2 className="text-xl font-bold text-white tracking-tight">
+        <h2 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.5px' }}>
           Navigation
         </h2>
         <button
@@ -178,7 +174,7 @@ export function NavigationSidebar() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-4 flex flex-col gap-2">
+      <div className="flex-1 px-4 pt-5 flex flex-col gap-2">
         {/* Navigation Items */}
         {navigationItems.map((item, index) => {
           const Icon = item.icon;
@@ -188,7 +184,7 @@ export function NavigationSidebar() {
             <button
               key={item.id}
               onClick={() => handleNavItemClick(item)}
-              className={`nav-item nav-item-shimmer flex items-center p-4 rounded-xl transition-all duration-300 relative overflow-hidden ${
+              className={`nav-item nav-item-shimmer flex items-center p-4 rounded-xl transition-all duration-300 relative overflow-hidden border font-medium ${
                 isActive ? 'border' : 'border border-transparent'
               }`}
               style={{
@@ -198,6 +194,7 @@ export function NavigationSidebar() {
                   : 'transparent',
                 borderColor: isActive ? 'rgba(102, 126, 234, 0.5)' : 'transparent',
                 boxShadow: isActive ? '0 4px 12px rgba(102, 126, 234, 0.2)' : 'none',
+                fontSize: '15px',
                 opacity: 0,
                 transform: 'translateX(-20px)',
                 animation: `slideIn 0.3s ease forwards ${0.1 * (index + 1)}s`
@@ -224,13 +221,13 @@ export function NavigationSidebar() {
               <div className="w-5 h-5 mr-4 flex items-center justify-center flex-shrink-0">
                 <Icon size={20} />
               </div>
-              <span className="flex-1 text-left text-base font-medium">
+              <span className="flex-1 text-left line-height-1.4">
                 {item.title}
               </span>
               {item.hasSubmenu && (
                 <ChevronRight 
                   size={16} 
-                  className="opacity-60 transition-all duration-200"
+                  className="nav-arrow opacity-60 transition-all duration-200"
                   style={{
                     transform: 'rotate(0deg)'
                   }}
@@ -243,7 +240,7 @@ export function NavigationSidebar() {
 
       {/* Footer */}
       <div 
-        className="p-6 border-t"
+        className="px-6 py-5 border-t"
         style={{
           borderTopColor: 'rgba(255, 255, 255, 0.08)',
           background: 'rgba(255, 255, 255, 0.02)'
@@ -296,6 +293,14 @@ export function NavigationSidebar() {
         .nav-item:hover .nav-arrow {
           opacity: 1;
           transform: rotate(90deg) translateX(2px);
+        }
+
+        @media (max-width: 768px) {
+          .navigation-sidebar {
+            width: 100%;
+            max-width: 320px;
+            height: 70vh;
+          }
         }
       `}</style>
     </div>

@@ -3,6 +3,7 @@ import { AlbumBackground } from '@/components/AlbumBackground';
 import { AlbumHero } from '@/components/AlbumHero';
 import { TrackList } from '@/components/TrackList';
 import { AlbumRecommendations } from '@/components/AlbumRecommendations';
+import { PublisherFeedItems } from '@/components/PublisherFeedItems';
 import { useAlbumControls } from '@/components/AlbumControls';
 import { AlbumNavigation } from '@/components/AlbumNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -192,6 +193,11 @@ export function AlbumViewEnhanced({ feedUrl }: AlbumViewEnhancedProps) {
 
       <AlbumRecommendations
         podroll={albumData.podroll}
+        currentFeedUrl={currentFeedUrl}
+      />
+
+      <PublisherFeedItems
+        publisherFeed={albumData.publisherFeed}
         currentFeedUrl={currentFeedUrl}
       />
     </AlbumBackground>
