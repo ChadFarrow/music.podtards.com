@@ -196,6 +196,14 @@ export const PRODUCERS_PICKS_ALBUMS: Album[] = [
     artwork: 'https://files.bitpunk.fm/spectral_hiding.png',
     feedUrl: 'https://zine.bitpunk.fm/feeds/spectral-hiding.xml',
     description: 'Ethereal electronic compositions that blur the line between digital and organic.'
+  },
+  {
+    id: 'mikes-mixtape',
+    title: 'Mike\'s Mix Tape',
+    artist: 'Mike Neumann',
+    artwork: 'https://cdn.mikesmixtape.com/assets/static/mmt-logo2-512.jpg',
+    feedUrl: 'https://mikesmixtape.com/mikesmixtaperss.xml',
+    description: 'A value4value old school mix tape podcast featuring curated value4value music from independent artists.'
   }
 ];
 
