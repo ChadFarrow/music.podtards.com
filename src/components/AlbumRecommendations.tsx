@@ -173,11 +173,21 @@ export function AlbumRecommendations({ podroll, currentFeedUrl }: AlbumRecommend
                       alt={recommendation.title}
                       className="w-full h-full object-cover rounded-xl"
                       onLoad={() => console.log('🖼️ Image loaded:', recommendation.title, recommendation.image)}
-                      onError={(e) => console.log('❌ Image failed:', recommendation.title, recommendation.image, e)}
+                      onError={(e) => {
+                        console.log('❌ Image failed:', recommendation.title, recommendation.image, e);
+                        // Create fallback on error
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.parentElement?.querySelector('.fallback-icon');
+                        if (fallback) {
+                          (fallback as HTMLElement).style.display = 'flex';
+                        }
+                      }}
                     />
-                  ) : (
+                  ) : null}
+                  <div className="fallback-icon absolute inset-0 flex items-center justify-center" style={{ display: recommendation.image ? 'none' : 'flex' }}>
                     <Music className="h-16 w-16 text-gray-400" />
-                  )}
+                  </div>
                 </div>
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 rounded-xl flex items-center justify-center">
                   <button className="opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300 bg-red-600 hover:bg-red-500 text-white rounded-full p-3 shadow-lg">

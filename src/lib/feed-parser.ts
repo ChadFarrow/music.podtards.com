@@ -109,6 +109,10 @@ async function fetchPodRollArtwork(feedUrl: string): Promise<string | undefined>
     
     if (artwork) {
       console.log(`🎨 Found artwork: ${artwork}`);
+      // Use image proxy for better reliability
+      if (artwork.startsWith('http') && !artwork.includes('images.weserv.nl')) {
+        return `https://images.weserv.nl/?url=${encodeURIComponent(artwork)}&w=300&h=300&fit=crop&auto=format`;
+      }
       return artwork;
     } else {
       console.log(`🎨 No artwork found in feed`);
@@ -432,12 +436,12 @@ async function parsePodRoll(element: Element): Promise<PodRollItem[] | undefined
     // Generate fallback artwork if still no image
     if (!finalImage) {
       const fallbackImages = [
-        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&auto=format', // Banjo
-        'https://images.unsplash.com/photo-1471478331149-c72f17e33c73?w=300&h=300&fit=crop&auto=format', // Drums
-        'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=300&h=300&fit=crop&auto=format', // Guitar
-        'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=300&fit=crop&auto=format', // Beach/indie
-        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&auto=format', // String instrument
-        'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=300&h=300&fit=crop&auto=format'  // Microphone
+        'https://images.weserv.nl/?url=https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f&w=300&h=300&fit=crop&auto=format', // Banjo
+        'https://images.weserv.nl/?url=https://images.unsplash.com/photo-1471478331149-c72f17e33c73&w=300&h=300&fit=crop&auto=format', // Drums
+        'https://images.weserv.nl/?url=https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f&w=300&h=300&fit=crop&auto=format', // Guitar
+        'https://images.weserv.nl/?url=https://images.unsplash.com/photo-1544947950-fa07a98d237f&w=300&h=300&fit=crop&auto=format', // Beach/indie
+        'https://images.weserv.nl/?url=https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f&w=300&h=300&fit=crop&auto=format', // String instrument
+        'https://images.weserv.nl/?url=https://images.unsplash.com/photo-1571330735066-03aaa9429d89&w=300&h=300&fit=crop&auto=format'  // Microphone
       ];
       finalImage = fallbackImages[item.index % fallbackImages.length];
       console.log(`🎵 Using fallback image ${item.index % fallbackImages.length + 1} for: "${item.title}"`);
