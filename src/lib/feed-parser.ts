@@ -176,6 +176,7 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
   if (medium === 'publisher') {
     console.log('🏢 Detected publisher feed, parsing remoteItem albums...');
     feed.publisherAlbums = await parsePublisherAlbums(channel);
+    console.log('🏢 Publisher albums parsing complete, found', feed.publisherAlbums?.length || 0, 'albums');
   } else {
     console.log('🏢 Not a publisher feed, medium is:', medium);
   }
@@ -498,7 +499,7 @@ async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
         if (feedUrl) {
           try {
             console.log('🏢 Fetching album details from:', feedUrl);
-            const { fetchAndParseFeed } = await import('@/lib/feed-parser');
+            // Use the existing fetchAndParseFeed function directly instead of dynamic import
             const albumFeed = await fetchAndParseFeed(feedUrl);
             
             title = albumFeed.title || 'Unknown Album';
@@ -525,6 +526,7 @@ async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
   }
   
   console.log('🏢 parsePublisherAlbums: Found', albums.length, 'albums');
+  console.log('🏢 parsePublisherAlbums: Album titles:', albums.map(a => a.title));
   return albums;
 }
 
