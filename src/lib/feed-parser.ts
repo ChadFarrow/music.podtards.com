@@ -148,7 +148,7 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
     image: getChannelImage(channel),
     author: getChannelAuthor(channel),
     publisher: getTextContent(channel, 'podcast\\:publisher'),
-    publisherFeed: parsePublisherFeed(channel),
+    publisherFeed: undefined, // Temporarily disabled to fix feed errors
     value: parseValueBlock(channel),
     podroll: await parsePodRoll(channel),
     funding: parseFunding(channel),
