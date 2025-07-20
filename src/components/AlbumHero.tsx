@@ -13,6 +13,7 @@ interface AlbumHeroProps {
   artist: string;
   artwork: string;
   description?: string;
+  publisher?: string;
   trackCount: number;
   totalDuration: number;
   currentYear: number;
@@ -26,6 +27,7 @@ export function AlbumHero({
   artist,
   artwork,
   description,
+  publisher,
   trackCount,
   totalDuration,
   currentYear,
@@ -100,7 +102,10 @@ export function AlbumHero({
                 Featured Album
               </p>
               <h1 className="text-5xl lg:text-7xl font-black text-white mb-4 leading-tight">{title}</h1>
-              <h2 className="text-2xl lg:text-3xl text-gray-300 font-light mb-6">{artist}</h2>
+              <h2 className="text-2xl lg:text-3xl text-gray-300 font-light mb-2">{artist}</h2>
+              {publisher && (
+                <p className="text-lg text-gray-400 font-light mb-6">Published by {publisher}</p>
+              )}
             </div>
             
             {description && (

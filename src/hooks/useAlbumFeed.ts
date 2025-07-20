@@ -14,6 +14,7 @@ export interface AlbumFeedData {
   artist: string;
   description: string;
   artwork: string;
+  publisher?: string;
   tracks: AlbumTrack[];
   podroll?: PodRollItem[];
   value?: {
@@ -60,6 +61,7 @@ async function fetchAlbumFeed(feedUrl: string): Promise<AlbumFeedData> {
       artist: parsedFeed.author || 'Unknown Artist',
       description: parsedFeed.description || '',
       artwork: parsedFeed.image || '',
+      publisher: parsedFeed.publisher,
       tracks: [],
       podroll: parsedFeed.podroll,
       value: parsedFeed.value ? {
@@ -124,6 +126,7 @@ async function fetchAlbumFeed(feedUrl: string): Promise<AlbumFeedData> {
           feedUrl: feedUrl,
           feedAuthor: albumData.artist,
           feedDescription: albumData.description,
+          feedPublisher: episode.publisher || albumData.publisher,
           value: episode.value ? {
             model: {
               type: episode.value.type || 'lightning',
