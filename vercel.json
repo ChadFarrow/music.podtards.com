@@ -1,6 +1,6 @@
 {
   "name": "music-podtards",
-  "buildCommand": "npm run build:vercel",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
     {
