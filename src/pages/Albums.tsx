@@ -342,6 +342,14 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
       artwork: 'https://feed.falsefinish.club/Vance%20Latta/Vance%20Latta%20-%20Love%20In%20Its%20Purest%20Form/cover.png',
       feedUrl: 'https://feed.falsefinish.club/Vance Latta/Vance Latta - Love In Its Purest Form/love in its purest form.xml',
       description: 'Heartfelt expressions of love in musical form'
+    },
+    {
+      id: 'mikes-mixtape',
+      title: 'Mike\'s Mix Tape',
+      artist: 'Mike Neumann',
+      artwork: 'https://cdn.mikesmixtape.com/assets/static/mmt-logo2-512.jpg',
+      feedUrl: 'https://mikesmixtape.com/mikesmixtaperss.xml',
+      description: 'A value4value old school mix tape podcast featuring curated value4value music from independent artists. 🎵⚡'
     }
   ];
 
@@ -382,7 +390,8 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
     'love-in-its-purest-form',
     'stay-awhile',
     'lofi-experience',
-    'heycitizen-experience'
+    'heycitizen-experience',
+    'mikes-mixtape'
   ];
 
   // Live concert folder (audio-only, optimized for performance)
