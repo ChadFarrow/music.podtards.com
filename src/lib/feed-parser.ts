@@ -159,9 +159,12 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
 
   // Check if this is a publisher feed (has podcast:medium="publisher")
   const medium = channel.querySelector('podcast\\:medium')?.textContent?.trim();
+  console.log('🏢 Checking feed medium:', medium);
   if (medium === 'publisher') {
     console.log('🏢 Detected publisher feed, parsing remoteItem albums...');
     feed.publisherAlbums = await parsePublisherAlbums(channel);
+  } else {
+    console.log('🏢 Not a publisher feed, medium is:', medium);
   }
 
   // Parse episodes
