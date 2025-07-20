@@ -1,9 +1,10 @@
 // Service Worker for Podtardstr PWA
 // Provides offline support and caching for better mobile experience
 
-const CACHE_NAME = 'podtardstr-v7';
-const STATIC_CACHE_NAME = 'podtardstr-static-v7';
-const DYNAMIC_CACHE_NAME = 'podtardstr-dynamic-v7';
+const CACHE_NAME = 'podtardstr-v8';
+const STATIC_CACHE_NAME = 'podtardstr-static-v8';
+const DYNAMIC_CACHE_NAME = 'podtardstr-dynamic-v8';
+const API_CACHE_NAME = 'podtardstr-api-v8';
 
 // Files to cache for offline functionality
 const STATIC_ASSETS = [
@@ -16,45 +17,65 @@ const STATIC_ASSETS = [
   '/apple-touch-icon.png'
 ];
 
+// Cache strategies
+const CACHE_STRATEGIES = {
+  STATIC: 'cache-first',      // Icons, manifest, static assets
+  BUNDLES: 'stale-while-revalidate', // JS/CSS bundles
+  API: 'network-first',       // API calls
+  IMAGES: 'cache-first',      // Images and media
+  HTML: 'network-first'       // HTML pages
+};
+
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log('[SW] Installing service worker v8...');
   
   event.waitUntil(
-    caches.open(STATIC_CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll(STATIC_ASSETS.filter(url => {
-        // Only cache assets that exist
-        return fetch(url).then(response => response.ok).catch(() => false);
-      }));
-    }).catch((error) => {
-      console.warn('[SW] Failed to cache some static assets:', error);
+    Promise.all([
+      // Cache static assets
+      caches.open(STATIC_CACHE_NAME).then((cache) => {
+        console.log('[SW] Caching static assets');
+        return cache.addAll(STATIC_ASSETS);
+      }),
+      
+      // Pre-cache critical assets
+      caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+        console.log('[SW] Pre-caching critical assets');
+        return cache.addAll([
+          // Add any critical assets that should be cached immediately
+        ]);
+      })
+    ]).catch((error) => {
+      console.warn('[SW] Failed to cache some assets:', error);
     })
   );
   
-  // Don't force immediate activation to prevent refresh loops
-  // self.skipWaiting();
+  // Skip waiting to activate immediately
+  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log('[SW] Activating service worker v8...');
   
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (![STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME, API_CACHE_NAME].includes(cacheName)) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      
+      // Take control of all clients immediately
+      self.clients.claim()
+    ])
   );
-  
-  // Don't take control immediately to prevent refresh loops
-  // self.clients.claim();
 });
 
 // Fetch event - serve cached content when offline
@@ -74,64 +95,82 @@ self.addEventListener('fetch', (event) => {
   
   // Handle different types of requests
   if (event.request.method === 'GET') {
-    // Main HTML files - always network first to get latest version
-    if (event.request.url.endsWith('/') || 
-        event.request.url.endsWith('.html') ||
-        event.request.url.includes('/index.html')) {
-      event.respondWith(networkFirstStrategy(event.request));
-      return;
-    }
+    const strategy = getCacheStrategy(event.request, url);
     
-    // JavaScript bundles - always network first for updates
-    if (event.request.url.includes('/assets/') && 
-        (event.request.url.includes('.js') || event.request.url.includes('.css'))) {
-      event.respondWith(networkFirstStrategy(event.request));
-      return;
+    switch (strategy) {
+      case CACHE_STRATEGIES.STATIC:
+        event.respondWith(cacheFirstStrategy(event.request, STATIC_CACHE_NAME));
+        break;
+      case CACHE_STRATEGIES.BUNDLES:
+        event.respondWith(staleWhileRevalidateStrategy(event.request, DYNAMIC_CACHE_NAME));
+        break;
+      case CACHE_STRATEGIES.API:
+        event.respondWith(networkFirstStrategy(event.request, API_CACHE_NAME));
+        break;
+      case CACHE_STRATEGIES.IMAGES:
+        event.respondWith(cacheFirstStrategy(event.request, DYNAMIC_CACHE_NAME));
+        break;
+      case CACHE_STRATEGIES.HTML:
+      default:
+        event.respondWith(networkFirstStrategy(event.request, DYNAMIC_CACHE_NAME));
+        break;
     }
-    
-    // Static assets like manifest, icons - cache first strategy
-    if (event.request.url.includes('/manifest.webmanifest') ||
-        event.request.url.includes('/favicon') ||
-        event.request.url.includes('/icon-') ||
-        event.request.url.includes('/apple-touch-icon')) {
-      event.respondWith(cacheFirstStrategy(event.request));
-      return;
-    }
-    
-    // API requests - network first with cache fallback
-    if (url.pathname.startsWith('/api/') || 
-        url.hostname.includes('api.') || 
-        url.hostname.includes('stats.') ||
-        url.hostname.includes('podcastindex.org')) {
-      event.respondWith(networkFirstStrategy(event.request));
-      return;
-    }
-    
-    // Images and media - cache first with network fallback
-    if (event.request.destination === 'image' || 
-        event.request.destination === 'audio' ||
-        event.request.url.includes('/image/') ||
-        event.request.url.includes('.jpg') ||
-        event.request.url.includes('.png') ||
-        event.request.url.includes('.mp3') ||
-        event.request.url.includes('.m4a')) {
-      event.respondWith(cacheFirstStrategy(event.request));
-      return;
-    }
-    
-    // Other GET requests - network first
-    event.respondWith(networkFirstStrategy(event.request));
   }
 });
 
+// Determine cache strategy based on request
+function getCacheStrategy(request, url) {
+  // Static assets
+  if (request.url.includes('/manifest.webmanifest') ||
+      request.url.includes('/favicon') ||
+      request.url.includes('/icon-') ||
+      request.url.includes('/apple-touch-icon')) {
+    return CACHE_STRATEGIES.STATIC;
+  }
+  
+  // JavaScript and CSS bundles
+  if (request.url.includes('/assets/') && 
+      (request.url.includes('.js') || request.url.includes('.css'))) {
+    return CACHE_STRATEGIES.BUNDLES;
+  }
+  
+  // API requests
+  if (url.pathname.startsWith('/api/') || 
+      url.hostname.includes('api.') || 
+      url.hostname.includes('stats.') ||
+      url.hostname.includes('podcastindex.org')) {
+    return CACHE_STRATEGIES.API;
+  }
+  
+  // Images and media
+  if (request.destination === 'image' || 
+      request.destination === 'audio' ||
+      request.url.includes('/image/') ||
+      request.url.includes('.jpg') ||
+      request.url.includes('.png') ||
+      request.url.includes('.mp3') ||
+      request.url.includes('.m4a')) {
+    return CACHE_STRATEGIES.IMAGES;
+  }
+  
+  // HTML pages
+  if (request.destination === 'document' ||
+      request.url.endsWith('/') || 
+      request.url.endsWith('.html')) {
+    return CACHE_STRATEGIES.HTML;
+  }
+  
+  return CACHE_STRATEGIES.HTML;
+}
+
 // Cache first strategy - good for static assets
-async function cacheFirstStrategy(request) {
+async function cacheFirstStrategy(request, cacheName) {
   try {
-    const cache = await caches.open(STATIC_CACHE_NAME);
+    const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
     
     if (cachedResponse) {
-      // Return cached version immediately
+      console.log('[SW] Serving from cache:', request.url);
       return cachedResponse;
     }
     
@@ -141,18 +180,57 @@ async function cacheFirstStrategy(request) {
     if (networkResponse.ok && request.method === 'GET') {
       const responseClone = networkResponse.clone();
       cache.put(request, responseClone);
+      console.log('[SW] Cached new resource:', request.url);
     }
     
     return networkResponse;
   } catch (error) {
     console.warn('[SW] Cache first strategy failed:', error);
-    // Return offline fallback if available
+    return getOfflineFallback(request);
+  }
+}
+
+// Stale while revalidate strategy - good for bundles
+async function staleWhileRevalidateStrategy(request, cacheName) {
+  try {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+    
+    // Return cached version immediately if available
+    if (cachedResponse) {
+      console.log('[SW] Serving stale from cache:', request.url);
+      
+      // Update cache in background
+      fetch(request).then((networkResponse) => {
+        if (networkResponse.ok) {
+          cache.put(request, networkResponse);
+          console.log('[SW] Updated cache in background:', request.url);
+        }
+      }).catch(() => {
+        // Ignore background update failures
+      });
+      
+      return cachedResponse;
+    }
+    
+    // If not cached, fetch and cache
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok && request.method === 'GET') {
+      const responseClone = networkResponse.clone();
+      cache.put(request, responseClone);
+      console.log('[SW] Cached new bundle:', request.url);
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.warn('[SW] Stale while revalidate failed:', error);
     return getOfflineFallback(request);
   }
 }
 
 // Network first strategy - good for dynamic content
-async function networkFirstStrategy(request) {
+async function networkFirstStrategy(request, cacheName) {
   try {
     // Add timeout to prevent hanging
     const controller = new AbortController();
@@ -166,13 +244,14 @@ async function networkFirstStrategy(request) {
     
     // Cache successful responses
     if (networkResponse.ok && request.method === 'GET') {
-      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      const cache = await caches.open(cacheName);
       const responseClone = networkResponse.clone();
       
       // Don't cache very large responses
       const contentLength = responseClone.headers.get('content-length');
       if (!contentLength || parseInt(contentLength) < 5000000) { // 5MB limit
         cache.put(request, responseClone);
+        console.log('[SW] Cached network response:', request.url);
       }
     }
     
@@ -181,10 +260,11 @@ async function networkFirstStrategy(request) {
     console.warn('[SW] Network request failed, trying cache:', error);
     
     // If network fails, try to serve from cache
-    const cache = await caches.open(DYNAMIC_CACHE_NAME);
+    const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
     
     if (cachedResponse) {
+      console.log('[SW] Serving from cache after network failure:', request.url);
       return cachedResponse;
     }
     
@@ -195,6 +275,8 @@ async function networkFirstStrategy(request) {
 
 // Offline fallback responses
 function getOfflineFallback(request) {
+  console.log('[SW] Providing offline fallback for:', request.url);
+  
   if (request.destination === 'document') {
     // Return cached index.html for navigation requests
     return caches.match('/') || caches.match('/index.html');
@@ -260,4 +342,23 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.openWindow('/')
   );
+});
+
+// Handle service worker messages
+self.addEventListener('message', (event) => {
+  console.log('[SW] Message received:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CACHE_CLEAR') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => caches.delete(cacheName))
+        );
+      })
+    );
+  }
 });

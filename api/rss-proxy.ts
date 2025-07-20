@@ -1,10 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'crypto';
+
+// In-memory cache for development (Vercel will handle caching in production)
+const cache = new Map<string, { data: string; etag: string; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, If-None-Match');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -40,6 +45,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       console.error('Invalid protocol:', parsedUrl.protocol);
       res.status(400).json({ error: 'Only HTTP and HTTPS URLs are allowed' });
+      return;
+    }
+
+    // Generate cache key
+    const cacheKey = crypto.createHash('md5').update(url).digest('hex');
+    
+    // Check cache first
+    const cached = cache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+      console.log('RSS Proxy: Serving from cache');
+      
+      // Check if client has the same version (ETag)
+      const ifNoneMatch = req.headers['if-none-match'];
+      if (ifNoneMatch === cached.etag) {
+        res.status(304).end(); // Not Modified
+        return;
+      }
+      
+      // Set cache headers
+      res.setHeader('ETag', cached.etag);
+      res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600');
+      res.setHeader('CDN-Cache-Control', 'public, max-age=600');
+      res.setHeader('Vercel-CDN-Cache-Control', 'public, max-age=600');
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      
+      res.status(200).send(cached.data);
       return;
     }
 
@@ -91,9 +124,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error('Response does not appear to be XML/RSS content');
     }
 
+    // Generate ETag for caching
+    const etag = crypto.createHash('md5').update(text).digest('hex');
+    
+    // Cache the response
+    cache.set(cacheKey, {
+      data: text,
+      etag: etag,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (keep only last 100 entries)
+    if (cache.size > 100) {
+      const entries = Array.from(cache.entries());
+      entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
+      const toDelete = entries.slice(100);
+      toDelete.forEach(([key]) => cache.delete(key));
+    }
+
     // Set appropriate headers
     res.setHeader('Content-Type', contentType.includes('xml') ? contentType : 'application/xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+    res.setHeader('ETag', etag);
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600');
+    res.setHeader('CDN-Cache-Control', 'public, max-age=600');
+    res.setHeader('Vercel-CDN-Cache-Control', 'public, max-age=600');
     
     console.log('RSS Proxy: Sending successful response');
     res.status(200).send(text);

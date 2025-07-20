@@ -18,6 +18,13 @@
     <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
     
+    <!-- Preload critical JavaScript -->
+    <link rel="preload" href="/src/main.tsx" as="script" type="module">
+    <link rel="preload" href="/src/lib/polyfills.ts" as="script" type="module">
+    
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="/src/index.css" as="style">
+    
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="Podtardstr" />
     <meta name="theme-color" content="#000000" />
@@ -32,9 +39,9 @@
     
     <!-- Icons and Manifest -->
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=107">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=107">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=107">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=108">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=108">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=108">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
@@ -76,6 +83,20 @@
         Object.assign(linkElement, link);
         document.head.appendChild(linkElement);
       });
+      
+      // Service Worker registration optimization
+      if ('serviceWorker' in navigator) {
+        // Register service worker with high priority
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(registration => {
+              console.log('✅ Service Worker registered with caching:', registration.scope);
+            })
+            .catch(error => {
+              console.warn('❌ Service Worker registration failed:', error);
+            });
+        });
+      }
     </script>
   </head>
   <body>
