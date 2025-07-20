@@ -1,17 +1,28 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { getSecureImageUrl, getFallbackImageUrl, getMusicFallbackEmoji } from '@/lib/image-utils';
 
 interface SecureImageProps {
   src: string;
   alt: string;
   className?: string;
   fallback?: string;
+  width?: number;
+  height?: number;
 }
 
-export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureImageProps) {
+export function SecureImage({ 
+  src, 
+  alt, 
+  className, 
+  fallback,
+  width = 800,
+  height = 800
+}: SecureImageProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [fallbackIndex, setFallbackIndex] = useState(0);
 
   useEffect(() => {
     if (!src) {
@@ -22,22 +33,12 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
 
     setIsLoading(true);
     setHasError(false);
+    setFallbackIndex(0);
 
-    // Use CORS-friendly image proxy for all external images
-    let secureSrc = src;
-    
-    // Check if it's a problematic domain that needs proxying
-    const needsProxy = src.includes('heycitizen.xyz') || 
-                      src.includes('behindthesch3m3s.com') ||
-                      src.startsWith('http://');
-    
-    if (needsProxy) {
-      // Use a different proxy service that handles CORS better
-      secureSrc = `https://corsproxy.io/?${encodeURIComponent(src)}`;
-    }
-
+    // Get the secure image URL
+    const secureSrc = getSecureImageUrl(src, { width, height });
     setImgSrc(secureSrc);
-  }, [src]);
+  }, [src, width, height]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -45,21 +46,28 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
   };
 
   const handleError = () => {
-    // If the image failed and we haven't tried proxy yet, try with proxy
-    if (imgSrc === src && !imgSrc.includes('corsproxy.io')) {
-      const proxySrc = `https://corsproxy.io/?${encodeURIComponent(src)}`;
-      setImgSrc(proxySrc);
+    // Get fallback URLs
+    const fallbackUrls = getFallbackImageUrl(src);
+    
+    // Try the next fallback URL
+    if (fallbackIndex < fallbackUrls.length) {
+      setFallbackIndex(prev => prev + 1);
+      setImgSrc(fallbackUrls[fallbackIndex]);
       return;
     }
     
+    // All fallbacks failed
     setIsLoading(false);
     setHasError(true);
   };
 
+  // Get a music-themed fallback emoji if none provided
+  const fallbackEmoji = fallback || getMusicFallbackEmoji(src);
+
   if (hasError) {
     return (
       <div className={cn('flex items-center justify-center bg-gray-800 text-gray-400 text-4xl', className)}>
-        {fallback}
+        {fallbackEmoji}
       </div>
     );
   }
@@ -80,6 +88,7 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
         loading="lazy"
         onLoad={handleLoad}
         onError={handleError}
+        crossOrigin="anonymous"
       />
     </>
   );
