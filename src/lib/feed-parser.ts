@@ -781,6 +781,24 @@ export async function fetchAndParseFeed(feedUrl: string): Promise<ParsedFeed> {
       trimmedXml = trimmedXml.slice(1);
     }
     
+    // Check if response is base64 encoded (from proxy)
+    if (trimmedXml.startsWith('data:application/rss+xml;base64,')) {
+      console.log('📋 Detected base64-encoded XML response, decoding...');
+      try {
+        const base64Data = trimmedXml.replace('data:application/rss+xml;base64,', '');
+        const decodedXml = atob(base64Data);
+        trimmedXml = decodedXml;
+        console.log('📋 Successfully decoded base64 XML, length:', decodedXml.length);
+      } catch (error) {
+        console.error('📋 Failed to decode base64 XML:', error);
+        return {
+          title: 'Invalid Feed',
+          description: 'Unable to decode feed content',
+          episodes: []
+        };
+      }
+    }
+    
     console.log('📋 XML validation check:', {
       originalLength: xmlText.length,
       trimmedLength: trimmedXml.length,
