@@ -61,6 +61,10 @@ export function AppRouter() {
         
         {/* Publisher Feed Route */}
         <Route path="/albums/publisher" element={<Albums />} />
+        
+        {/* Dynamic Album Route - Handle arbitrary album IDs with query parameters */}
+        {/* This must come AFTER all specific album routes to avoid conflicts */}
+        <Route path="/albums/:albumId" element={<Albums />} />
   
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
