@@ -2,6 +2,7 @@ import { Play, Pause } from 'lucide-react';
 import { SecureImage } from '@/components/SecureImage';
 import { htmlToText } from '@/lib/html-utils';
 import { FundingButton } from '@/components/FundingButton';
+import { useNavigate } from 'react-router-dom';
 
 interface FundingInfo {
   url: string;
@@ -42,6 +43,7 @@ export function AlbumHero({
   funding,
   onPlayAlbum
 }: AlbumHeroProps) {
+  const navigate = useNavigate();
   const formatTotalDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -115,14 +117,18 @@ export function AlbumHero({
               )}
               {publisherFeed && (
                 <p className="text-lg text-gray-400 font-light mb-6">
-                  Part of <a 
-                    href={publisherFeed.feedUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 underline"
+                  Part of <button 
+                    onClick={() => {
+                      if (publisherFeed.feedUrl) {
+                        // Navigate to the publisher feed within the app
+                        const route = `/albums/publisher?feed=${encodeURIComponent(publisherFeed.feedUrl)}`;
+                        navigate(route);
+                      }
+                    }}
+                    className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
                   >
                     publisher catalog
-                  </a>
+                  </button>
                 </p>
               )}
             </div>

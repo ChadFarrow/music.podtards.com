@@ -58,6 +58,9 @@ export function AppRouter() {
         
         {/* ChadF Albums */}
         <Route path="/albums/wavlake-album" element={<Albums feedUrl="https://wavlake.com/feed/music/997060e3-9dc1-4cd8-b3c1-3ae06d54bb03" />} />
+        
+        {/* Publisher Feed Route */}
+        <Route path="/albums/publisher" element={<Albums />} />
   
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
