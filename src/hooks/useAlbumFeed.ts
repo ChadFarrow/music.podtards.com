@@ -9,12 +9,18 @@ export interface AlbumTrack extends PodcastIndexEpisode {
   albumArt?: string;
 }
 
+export interface PublisherFeed {
+  feedGuid?: string;
+  feedUrl?: string;
+}
+
 export interface AlbumFeedData {
   title: string;
   artist: string;
   description: string;
   artwork: string;
   publisher?: string;
+  publisherFeed?: PublisherFeed;
   tracks: AlbumTrack[];
   podroll?: PodRollItem[];
   value?: {
@@ -62,6 +68,7 @@ async function fetchAlbumFeed(feedUrl: string): Promise<AlbumFeedData> {
       description: parsedFeed.description || '',
       artwork: parsedFeed.image || '',
       publisher: parsedFeed.publisher,
+      publisherFeed: parsedFeed.publisherFeed,
       tracks: [],
       podroll: parsedFeed.podroll,
       value: parsedFeed.value ? {

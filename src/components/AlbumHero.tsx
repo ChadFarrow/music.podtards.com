@@ -8,12 +8,18 @@ interface FundingInfo {
   message: string;
 }
 
+interface PublisherFeed {
+  feedGuid?: string;
+  feedUrl?: string;
+}
+
 interface AlbumHeroProps {
   title: string;
   artist: string;
   artwork: string;
   description?: string;
   publisher?: string;
+  publisherFeed?: PublisherFeed;
   trackCount: number;
   totalDuration: number;
   currentYear: number;
@@ -28,6 +34,7 @@ export function AlbumHero({
   artwork,
   description,
   publisher,
+  publisherFeed,
   trackCount,
   totalDuration,
   currentYear,
@@ -104,7 +111,19 @@ export function AlbumHero({
               <h1 className="text-5xl lg:text-7xl font-black text-white mb-4 leading-tight">{title}</h1>
               <h2 className="text-2xl lg:text-3xl text-gray-300 font-light mb-2">{artist}</h2>
               {publisher && (
-                <p className="text-lg text-gray-400 font-light mb-6">Published by {publisher}</p>
+                <p className="text-lg text-gray-400 font-light mb-2">Published by {publisher}</p>
+              )}
+              {publisherFeed && (
+                <p className="text-lg text-gray-400 font-light mb-6">
+                  Part of <a 
+                    href={publisherFeed.feedUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    publisher catalog
+                  </a>
+                </p>
               )}
             </div>
             

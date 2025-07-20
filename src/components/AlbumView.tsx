@@ -202,6 +202,18 @@ export function AlbumView({ feedUrl }: AlbumViewProps) {
                   {albumData.publisher && (
                     <p className="text-sm text-muted-foreground">Published by {albumData.publisher}</p>
                   )}
+                  {albumData.publisherFeed && (
+                    <p className="text-sm text-muted-foreground">
+                      Part of <a 
+                        href={albumData.publisherFeed.feedUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        publisher catalog
+                      </a>
+                    </p>
+                  )}
                 </div>
                 <Button
                   variant={isPinned(selectedAlbumId) ? "default" : "outline"}

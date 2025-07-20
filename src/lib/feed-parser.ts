@@ -32,6 +32,11 @@ export interface FundingInfo {
   message: string;
 }
 
+export interface PublisherFeed {
+  feedGuid?: string;
+  feedUrl?: string;
+}
+
 export interface ParsedFeed {
   title?: string;
   description?: string;
@@ -39,6 +44,7 @@ export interface ParsedFeed {
   image?: string;
   author?: string;
   publisher?: string;
+  publisherFeed?: PublisherFeed;
   value?: ValueBlock;
   podroll?: PodRollItem[];
   funding?: FundingInfo;
@@ -142,6 +148,7 @@ export async function parseFeedXML(xmlText: string): Promise<ParsedFeed> {
     image: getChannelImage(channel),
     author: getChannelAuthor(channel),
     publisher: getTextContent(channel, 'podcast\\:publisher'),
+    publisherFeed: parsePublisherFeed(channel),
     value: parseValueBlock(channel),
     podroll: await parsePodRoll(channel),
     funding: parseFunding(channel),
@@ -429,6 +436,42 @@ async function parsePodRoll(element: Element): Promise<PodRollItem[] | undefined
   }
   
   return podrollItems.length > 0 ? podrollItems : undefined;
+}
+
+/**
+ * Parses podcast:remoteItem elements with medium="publisher" to extract publisher feed information
+ */
+function parsePublisherFeed(element: Element): PublisherFeed | undefined {
+  console.log('🏢 parsePublisherFeed: Starting publisher feed parsing...');
+  
+  // Look for podcast:remoteItem with medium="publisher"
+  const publisherItems = element.querySelectorAll('podcast\\:remoteItem, remoteItem');
+  console.log('🏢 parsePublisherFeed: Found', publisherItems.length, 'remoteItem elements');
+  
+  for (const item of Array.from(publisherItems)) {
+    const medium = item.getAttribute('medium');
+    console.log('🏢 parsePublisherFeed: Checking remoteItem with medium:', medium);
+    
+    if (medium === 'publisher') {
+      const feedGuid = item.getAttribute('feedGuid') || undefined;
+      const feedUrl = item.getAttribute('feedUrl') || undefined;
+      
+      console.log('🏢 parsePublisherFeed: Found publisher feed:', {
+        feedGuid: feedGuid?.substring(0, 20) + '...',
+        feedUrl: feedUrl?.substring(0, 50) + '...'
+      });
+      
+      if (feedGuid || feedUrl) {
+        return {
+          feedGuid,
+          feedUrl
+        };
+      }
+    }
+  }
+  
+  console.log('🏢 parsePublisherFeed: No publisher feed found');
+  return undefined;
 }
 
 /**

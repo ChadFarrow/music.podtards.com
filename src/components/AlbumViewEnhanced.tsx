@@ -172,6 +172,7 @@ export function AlbumViewEnhanced({ feedUrl }: AlbumViewEnhancedProps) {
         artwork={albumData.artwork}
         description={albumData.description}
         publisher={albumData.publisher}
+        publisherFeed={albumData.publisherFeed}
         trackCount={albumData.tracks.length}
         totalDuration={totalDuration}
         currentYear={currentYear}

@@ -147,6 +147,25 @@ describe('Feed Parser', () => {
       expect(feed.episodes[0].publisher).toBe('Episode Publisher LLC');
     });
 
+    it('should parse publisher feed references', async () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+        <rss xmlns:podcast="https://podcastindex.org/namespace/1.0">
+          <channel>
+            <title>Test Album</title>
+            <description>A test album</description>
+            <podcast:remoteItem medium="publisher" feedGuid="aa909244-7555-4b52-ad88-7233860c6fb4" feedUrl="https://example.com/feed/artist/aa909244-7555-4b52-ad88-7233860c6fb4">
+            </podcast:remoteItem>
+          </channel>
+        </rss>`;
+
+      const feed = await parseFeedXML(xml);
+
+      expect(feed.title).toBe('Test Album');
+      expect(feed.publisherFeed).toBeDefined();
+      expect(feed.publisherFeed?.feedGuid).toBe('aa909244-7555-4b52-ad88-7233860c6fb4');
+      expect(feed.publisherFeed?.feedUrl).toBe('https://example.com/feed/artist/aa909244-7555-4b52-ad88-7233860c6fb4');
+    });
+
     it('should filter out invalid recipients', async () => {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
         <rss xmlns:podcast="https://podcastindex.org/namespace/1.0">
