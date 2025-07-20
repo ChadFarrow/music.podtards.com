@@ -1,4 +1,5 @@
 import { Play } from 'lucide-react';
+import { ImageWithFallback } from '@/components/ImageWithFallback';
 import type { AlbumTrack } from '@/hooks/useAlbumFeed';
 
 interface TrackListProps {
@@ -55,17 +56,17 @@ export function TrackList({ tracks, artist, onTrackPlay, isTrackPlaying }: Track
                 <div className="flex items-center space-x-4">
                   {/* Track artwork if available */}
                   {track.image && track.image !== track.albumArt && (
-                    <img 
-                      src={track.image} 
-                      alt={track.title}
+                    <ImageWithFallback
+                      src={track.image}
+                      alt={(track as any).title || 'Track'}
                       className="w-12 h-12 rounded-lg object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
+                      width={48}
+                      height={48}
+                      fallback="🎵"
                     />
                   )}
                   <div>
-                    <p className="font-semibold text-white text-lg">{track.title}</p>
+                    <p className="font-semibold text-white text-lg">{(track as any).title || `Track ${index + 1}`}</p>
                     <p className="text-gray-400">{artist}</p>
                   </div>
                 </div>
