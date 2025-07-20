@@ -20,7 +20,7 @@ export const FEATURED_ALBUMS: Album[] = [
     id: 'heycitizen-experience',
     title: 'The HeyCitizen Experience',
     artist: 'HeyCitizen',
-    artwork: 'https://images.weserv.nl/?url=https%3A//files.heycitizen.xyz/Songs/Albums/HeyCitizen-Experience/HeyCitizen-Experience.png&w=800&h=800&fit=cover',
+    artwork: 'https://files.heycitizen.xyz/Songs/Albums/HeyCitizen-Experience/HeyCitizen-Experience.png',
     feedUrl: 'https://files.heycitizen.xyz/Songs/Albums/HeyCitizen-Experience/HeyCitizen-Experience.xml',
     description: 'An eclectic journey through electronic soundscapes and experimental beats.'
   },

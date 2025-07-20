@@ -23,13 +23,17 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
     setIsLoading(true);
     setHasError(false);
 
-    // Use image proxy for HTTP images to avoid mixed content
+    // Use CORS-friendly image proxy for all external images
     let secureSrc = src;
-    if (src.startsWith('http://')) {
-      secureSrc = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&h=800&fit=cover`;
-    } else if (src.startsWith('https://')) {
-      // For HTTPS images, try to load directly first
-      secureSrc = src;
+    
+    // Check if it's a problematic domain that needs proxying
+    const needsProxy = src.includes('heycitizen.xyz') || 
+                      src.includes('behindthesch3m3s.com') ||
+                      src.startsWith('http://');
+    
+    if (needsProxy) {
+      // Use a different proxy service that handles CORS better
+      secureSrc = `https://corsproxy.io/?${encodeURIComponent(src)}`;
     }
 
     setImgSrc(secureSrc);
@@ -41,9 +45,9 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
   };
 
   const handleError = () => {
-    // If the image failed and it's an HTTPS URL, try with proxy
-    if (imgSrc === src && src.startsWith('https://')) {
-      const proxySrc = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&h=800&fit=cover`;
+    // If the image failed and we haven't tried proxy yet, try with proxy
+    if (imgSrc === src && !imgSrc.includes('corsproxy.io')) {
+      const proxySrc = `https://corsproxy.io/?${encodeURIComponent(src)}`;
       setImgSrc(proxySrc);
       return;
     }
