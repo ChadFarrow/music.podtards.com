@@ -196,10 +196,16 @@ export function AlbumViewEnhanced({ feedUrl }: AlbumViewEnhancedProps) {
         currentFeedUrl={currentFeedUrl}
       />
 
-      <PublisherFeedItems
-        publisherFeed={albumData.publisherFeed}
-        currentFeedUrl={currentFeedUrl}
-      />
+      {albumData.publisherFeed && (
+        <div className="px-8 py-12">
+          <div className="max-w-6xl mx-auto">
+            <PublisherFeedItems
+              publisherFeed={albumData.publisherFeed}
+              currentFeedUrl={currentFeedUrl}
+            />
+          </div>
+        </div>
+      )}
     </AlbumBackground>
   );
 }

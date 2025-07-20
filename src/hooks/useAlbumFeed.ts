@@ -320,11 +320,18 @@ export function usePublisherFeed(publisherFeed?: PublisherFeed, options: { enabl
         return parsedFeed;
       } catch (error) {
         console.error('🏢 Error fetching publisher feed:', error);
-        throw error;
+        // Return a fallback instead of throwing to prevent page crashes
+        return {
+          title: 'Publisher Feed',
+          description: 'Unable to load publisher content',
+          episodes: [],
+          publisherFeed: undefined
+        };
       }
     },
     enabled: options.enabled !== false && !!publisherFeed?.feedUrl,
     staleTime: 30 * 60 * 1000, // 30 minutes
-    retry: 2,
+    retry: 1, // Reduce retries to avoid overwhelming the server
+    retryDelay: 2000, // Add delay between retries
   });
 }

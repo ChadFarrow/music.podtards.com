@@ -13,7 +13,9 @@ interface PublisherFeedItemsProps {
 
 export function PublisherFeedItems({ publisherFeed, currentFeedUrl }: PublisherFeedItemsProps) {
   const navigate = useNavigate();
-  const { data: publisherData, isLoading, error } = usePublisherFeed(publisherFeed);
+  const { data: publisherData, isLoading, error } = usePublisherFeed(publisherFeed, {
+    enabled: !!publisherFeed?.feedUrl && publisherFeed.feedUrl !== currentFeedUrl
+  });
 
   if (!publisherFeed?.feedUrl) {
     return null;
