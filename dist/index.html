@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Podtardstr Music - Value4Value Album Discovery</title>
     <meta name="description" content="Discover and stream featured albums with Value4Value Lightning payments" />
-    <!-- Force deployment trigger -->
+    
+    <!-- Performance Optimizations -->
+    <link rel="dns-prefetch" href="//api.podcastindex.org">
+    <link rel="dns-prefetch" href="//images.weserv.nl">
+    <link rel="dns-prefetch" href="//api.allorigins.win">
+    <link rel="preconnect" href="https://api.podcastindex.org">
+    <link rel="preconnect" href="https://images.weserv.nl">
+    <link rel="preconnect" href="https://api.allorigins.win">
+    
+    <!-- Critical CSS preload -->
+    
+    <noscript></noscript>
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="Podtardstr" />
@@ -21,9 +32,9 @@
     
     <!-- Icons and Manifest -->
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=106">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=106">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=106">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=107">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=107">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=107">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
@@ -42,13 +53,40 @@
     <meta name="twitter:image" content="https://podtardstr.vercel.app/icon-512.png" />
     
     <!-- Security -->
-    <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-src 'self' https:; font-src 'self'; base-uri 'self'; manifest-src 'self'; connect-src 'self' blob: https: wss: http:; img-src 'self' data: blob: https: http:; media-src 'self' https: http:; worker-src 'self' blob:;">
-    <script type="module" crossorigin src="/assets/index-00e836c8.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/vendor-f7030b6a.js">
-    <link rel="modulepreload" crossorigin href="/assets/payments-953d07f1.js">
-    <link rel="modulepreload" crossorigin href="/assets/ui-e24ae38e.js">
-    <link rel="modulepreload" crossorigin href="/assets/utils-19b93632.js">
-    <link rel="stylesheet" href="/assets/index-42f8ae96.css">
+    <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-src 'self' https:; font-src 'self'; base-uri 'self'; manifest-src 'self'; connect-src 'self' blob: https: wss: http:; img-src 'self' data: blob: https: http:; media-src 'self' https: http:; worker-src 'self' blob:;">
+    
+    <!-- Loading Performance Script -->
+    <script>
+      // Performance optimization: Preload critical resources
+      if ('connection' in navigator) {
+        if (navigator.connection.effectiveType === 'slow-2g' || navigator.connection.effectiveType === '2g') {
+          // Slow connection - load minimal resources
+          console.log('Slow connection detected, optimizing for performance');
+        }
+      }
+      
+      // Preload critical fonts and images
+      const preloadLinks = [
+        { rel: 'preload', href: '/src/main.tsx', as: 'script' },
+        { rel: 'preload', href: '/src/lib/polyfills.ts', as: 'script' }
+      ];
+      
+      preloadLinks.forEach(link => {
+        const linkElement = document.createElement('link');
+        Object.assign(linkElement, link);
+        document.head.appendChild(linkElement);
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-7dd03f87.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-7d64e89e.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-core-b0c19a84.js">
+    <link rel="modulepreload" crossorigin href="/assets/data-cb74b5d9.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-advanced-c34c9a06.js">
+    <link rel="modulepreload" crossorigin href="/assets/utils-6975b4e9.js">
+    <link rel="modulepreload" crossorigin href="/assets/other-98d32ace.js">
+    <link rel="modulepreload" crossorigin href="/assets/routing-4477d4b9.js">
+    <link rel="modulepreload" crossorigin href="/assets/images-3ba93385.js">
+    <link rel="stylesheet" href="/assets/index-1cef5f32.css">
   </head>
   <body>
     <div id="root"></div>

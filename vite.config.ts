@@ -62,7 +62,7 @@ export default defineConfig(() => {
     plugins: [
       react(),
     ],
-        define: {
+    define: {
       'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
     },
     resolve: {
@@ -71,18 +71,104 @@ export default defineConfig(() => {
       },
     },
     build: {
+      target: 'es2015',
+      minify: 'esbuild',
+      // Enable source maps for debugging
+      sourcemap: false,
+      // Optimize chunk size warnings
+      chunkSizeWarningLimit: 1000,
+      // Enable CSS code splitting
+      cssCodeSplit: true,
+      // Optimize assets
+      assetsInlineLimit: 4096,
+      // Enable rollup tree shaking
       rollupOptions: {
+        treeshake: true,
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom'],
-            ui: ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-tabs'],
-            payments: ['@getalby/bitcoin-connect', '@getalby/sdk'],
-            utils: ['date-fns', 'clsx', 'tailwind-merge']
-          }
+            // Core React libraries
+            'react-vendor': ['react', 'react-dom'],
+            
+            // UI components - split by usage frequency
+            'ui-core': [
+              '@radix-ui/react-dialog', 
+              '@radix-ui/react-popover', 
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-avatar',
+              '@radix-ui/react-slot'
+            ],
+            'ui-advanced': [
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-aspect-ratio',
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-collapsible',
+              '@radix-ui/react-context-menu',
+              '@radix-ui/react-hover-card',
+              '@radix-ui/react-label',
+              '@radix-ui/react-menubar',
+              '@radix-ui/react-navigation-menu',
+              '@radix-ui/react-progress',
+              '@radix-ui/react-radio-group',
+              '@radix-ui/react-scroll-area',
+              '@radix-ui/react-select',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-slider',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-toast',
+              '@radix-ui/react-toggle',
+              '@radix-ui/react-toggle-group',
+              '@radix-ui/react-tooltip'
+            ],
+            
+            // Payment libraries - loaded only when needed
+            'payments': ['@getalby/bitcoin-connect', '@getalby/sdk'],
+            
+            // Utility libraries
+            'utils': ['date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+            
+            // Data management
+            'data': ['@tanstack/react-query', 'zustand'],
+            
+            // Routing
+            'routing': ['react-router-dom'],
+            
+            // Form handling
+            'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            
+            // Charts and visualizations
+            'charts': ['recharts', 'canvas-confetti'],
+            
+            // Image processing
+            'images': ['colorthief'],
+            
+            // Other utilities
+            'other': ['lucide-react', 'sonner', 'vaul', 'embla-carousel-react', 'react-day-picker', 'react-resizable-panels', 'input-otp', 'cmdk']
+          },
+          // Optimize chunk names for better caching
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]'
         }
-      },
-      target: 'es2015',
-      minify: 'esbuild'
+      }
     },
+    // Optimize dependencies
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@tanstack/react-query',
+        'zustand',
+        'clsx',
+        'tailwind-merge',
+        'lucide-react'
+      ],
+      exclude: [
+        '@getalby/bitcoin-connect',
+        '@getalby/sdk'
+      ]
+    }
   };
 });

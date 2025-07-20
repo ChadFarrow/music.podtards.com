@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Podtardstr Music - Value4Value Album Discovery</title>
     <meta name="description" content="Discover and stream featured albums with Value4Value Lightning payments" />
-    <!-- Force deployment trigger -->
+    
+    <!-- Performance Optimizations -->
+    <link rel="dns-prefetch" href="//api.podcastindex.org">
+    <link rel="dns-prefetch" href="//images.weserv.nl">
+    <link rel="dns-prefetch" href="//api.allorigins.win">
+    <link rel="preconnect" href="https://api.podcastindex.org">
+    <link rel="preconnect" href="https://images.weserv.nl">
+    <link rel="preconnect" href="https://api.allorigins.win">
+    
+    <!-- Critical CSS preload -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="Podtardstr" />
@@ -21,9 +32,9 @@
     
     <!-- Icons and Manifest -->
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=106">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=106">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=106">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=107">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=107">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=107">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
@@ -42,7 +53,30 @@
     <meta name="twitter:image" content="https://podtardstr.vercel.app/icon-512.png" />
     
     <!-- Security -->
-    <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-src 'self' https:; font-src 'self'; base-uri 'self'; manifest-src 'self'; connect-src 'self' blob: https: wss: http:; img-src 'self' data: blob: https: http:; media-src 'self' https: http:; worker-src 'self' blob:;">
+    <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-src 'self' https:; font-src 'self'; base-uri 'self'; manifest-src 'self'; connect-src 'self' blob: https: wss: http:; img-src 'self' data: blob: https: http:; media-src 'self' https: http:; worker-src 'self' blob:;">
+    
+    <!-- Loading Performance Script -->
+    <script>
+      // Performance optimization: Preload critical resources
+      if ('connection' in navigator) {
+        if (navigator.connection.effectiveType === 'slow-2g' || navigator.connection.effectiveType === '2g') {
+          // Slow connection - load minimal resources
+          console.log('Slow connection detected, optimizing for performance');
+        }
+      }
+      
+      // Preload critical fonts and images
+      const preloadLinks = [
+        { rel: 'preload', href: '/src/main.tsx', as: 'script' },
+        { rel: 'preload', href: '/src/lib/polyfills.ts', as: 'script' }
+      ];
+      
+      preloadLinks.forEach(link => {
+        const linkElement = document.createElement('link');
+        Object.assign(linkElement, link);
+        document.head.appendChild(linkElement);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

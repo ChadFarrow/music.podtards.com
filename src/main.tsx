@@ -3,32 +3,14 @@ import { createRoot } from 'react-dom/client';
 // Import polyfills first
 import './lib/polyfills.ts';
 
-// Bitcoin Connect import - conditional to prevent mobile issues
-
 import App from './App.tsx';
 import './index.css';
-
-
 
 // Custom font can be added here if needed:
 // import '@fontsource-variable/<font-name>';
 
-// Initialize Bitcoin Connect for Lightning payments - skip on mobile to prevent refresh issues
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-console.log('Mobile detection:', { isMobile, userAgent: navigator.userAgent });
-if (!isMobile) {
-  // Dynamic import to prevent module loading on mobile
-  import('@getalby/bitcoin-connect').then(({ init }) => {
-    init({
-      appName: 'Podtardstr',
-    });
-    console.log('✅ Bitcoin Connect initialized for desktop');
-  }).catch(err => {
-    console.warn('Failed to initialize Bitcoin Connect:', err);
-  });
-} else {
-  console.log('📱 Bitcoin Connect disabled on mobile (temporary workaround)');
-}
+// Bitcoin Connect is now lazy-loaded in payment components
+// This reduces initial bundle size and improves loading performance
 
 // Register Service Worker for PWA functionality
 if ('serviceWorker' in navigator) {
