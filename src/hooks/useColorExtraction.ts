@@ -92,7 +92,7 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
         };
 
         img.onerror = () => {
-          console.error('🎨 Failed to load image for color extraction:', imageUrl);
+          console.log('🎨 Direct image load failed, trying CORS proxy for:', imageUrl);
           // Try with CORS proxy as fallback
           const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
           console.log('🎨 Trying CORS proxy:', proxyUrl);
@@ -150,20 +150,42 @@ export const useColorExtraction = (imageUrl: string | undefined) => {
               setColors(extractedColors);
             } catch (error) {
               console.error('🎨 Failed to extract colors via proxy:', error);
-              setColors(null);
+              // Set fallback colors when all else fails
+              const fallbackColors = {
+                primary: '#6366f1',
+                secondary: '#8b5cf6',
+                accent: '#a855f7',
+                palette: ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe']
+              };
+              console.log('🎨 Using fallback colors:', fallbackColors);
+              setColors(fallbackColors);
             }
           };
           
           proxyImg.onerror = () => {
-            console.error('🎨 CORS proxy also failed for:', imageUrl);
-            setColors(null);
+            console.log('🎨 CORS proxy also failed, using fallback colors for:', imageUrl);
+            // Set fallback colors when all else fails
+            const fallbackColors = {
+              primary: '#6366f1',
+              secondary: '#8b5cf6',
+              accent: '#a855f7',
+              palette: ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe']
+            };
+            console.log('🎨 Using fallback colors:', fallbackColors);
+            setColors(fallbackColors);
           };
           
           proxyImg.src = proxyUrl;
         };
 
-        // Try direct load first
-        img.src = imageUrl;
+        // Try direct load first (wrapped in try-catch to suppress CORS errors)
+        try {
+          img.src = imageUrl;
+        } catch (error) {
+          console.log('🎨 Direct image load failed immediately, trying CORS proxy for:', imageUrl);
+          // Trigger the onerror handler manually with a mock event
+          img.onerror?.(new Event('error'));
+        }
       } catch (error) {
         console.error('Color extraction error:', error);
         setColors(null);
