@@ -5,12 +5,13 @@ import { AlbumGallery } from '@/components/AlbumGallery';
 import { PodcastPlayer } from '@/components/PodcastPlayer';
 import { NowPlayingBar } from '@/components/NowPlayingBar';
 import { VersionDisplay } from '@/components/VersionDisplay';
-import { Disc, Menu, X, Sun, Moon, ChevronDown, ChevronRight, Folder, Music } from 'lucide-react';
+import { Disc, Menu, X, Sun, Moon, ChevronDown, ChevronRight, Folder, Music, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { usePinnedAlbums } from '@/hooks/usePinnedAlbums';
 import { useTheme } from '@/contexts/ThemeContext';
+import { FEATURED_ALBUMS } from '@/data/albums';
 
 interface AlbumsProps {
   feedUrl?: string;
@@ -23,7 +24,7 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
   const [showLiveConcerts, setShowLiveConcerts] = useState(false);
   const [showDoerfels, setShowDoerfels] = useState(false);
   const { pinnedAlbums, pinAlbum, isPinned } = usePinnedAlbums();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   
   // Mobile detection
   const isMobile = useMemo(() => {
@@ -535,20 +536,7 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
         </div>
         
         <div className="flex items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className={`p-2 rounded-full backdrop-blur-sm transition-all ${
-              theme === 'dark'
-                ? 'bg-black/50 hover:bg-black/70'
-                : 'bg-white/80 hover:bg-white/95 shadow-sm border border-gray-200'
-            }`}
-          >
-            {theme === 'dark' ? (
-              <Sun size={20} className="text-white" />
-            ) : (
-              <Moon size={20} className="text-gray-700" />
-            )}
-          </button>
+          {/* Theme toggle removed - dark mode only */}
         </div>
         </div>
       ) : null}
