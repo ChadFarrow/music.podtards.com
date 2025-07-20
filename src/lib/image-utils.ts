@@ -25,24 +25,38 @@ export function getSecureImageUrl(
     format = 'webp'
   } = options;
 
-  // Check if the URL needs proxying
+  // Check if the URL needs proxying - include all domains that have CORS issues
   const needsProxy = 
     originalUrl.includes('heycitizen.xyz') ||
     originalUrl.includes('behindthesch3m3s.com') ||
     originalUrl.includes('files.heycitizen.xyz') ||
-    originalUrl.startsWith('http://') ||
-    originalUrl.includes('corsproxy.io') ||
     originalUrl.includes('doerfelverse.com') ||
-    originalUrl.includes('cloudfront.net');
+    originalUrl.includes('cloudfront.net') ||
+    originalUrl.includes('d12wklypp119aj.cloudfront.net') ||
+    originalUrl.includes('f4.bcbits.com') ||
+    originalUrl.includes('bcbits.com') ||
+    originalUrl.includes('wavlake.com') ||
+    originalUrl.includes('wixstatic.com') ||
+    originalUrl.includes('staticsave.com') ||
+    originalUrl.includes('whiterabbitrecords.org') ||
+    originalUrl.includes('ableandthewolf.com') ||
+    originalUrl.includes('bitpunk.fm') ||
+    originalUrl.startsWith('http://') ||
+    originalUrl.includes('corsproxy.io');
 
   if (!needsProxy) {
     return originalUrl;
   }
 
-  // Use a more reliable proxy service
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`;
+  // Use multiple proxy services for better reliability
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`,
+    `https://proxy.cors.sh/${originalUrl}`,
+  ];
   
-  return proxyUrl;
+  // For now, return the first proxy (can be enhanced with retry logic)
+  return proxies[0];
 }
 
 /**
@@ -50,12 +64,12 @@ export function getSecureImageUrl(
  */
 export function getFallbackImageUrl(originalUrl: string): string[] {
   const fallbacks = [
-    // Try with different proxy services
+    // Try with different proxy services in order of reliability
+    `https://proxy.cors.sh/${originalUrl}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`,
     `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`,
-    `https://thingproxy.freeboard.io/fetch/${originalUrl}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(originalUrl)}`,
-    // Add more fallback services as needed
+    `https://thingproxy.freeboard.io/fetch/${originalUrl}`,
   ];
   
   return fallbacks;
