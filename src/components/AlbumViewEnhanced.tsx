@@ -196,8 +196,7 @@ export function AlbumViewEnhanced({ feedUrl }: AlbumViewEnhancedProps) {
         currentFeedUrl={currentFeedUrl}
       />
 
-      {/* Temporarily disabled publisher feed items to fix feed errors */}
-      {/* {albumData.publisherFeed && (
+      {albumData.publisherFeed && (
         <div className="px-8 py-12">
           <div className="max-w-6xl mx-auto">
             <PublisherFeedItems
@@ -206,7 +205,7 @@ export function AlbumViewEnhanced({ feedUrl }: AlbumViewEnhancedProps) {
             />
           </div>
         </div>
-      )} */}
+      )}
     </AlbumBackground>
   );
 }

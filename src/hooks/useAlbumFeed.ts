@@ -306,8 +306,6 @@ export function usePublisherFeed(publisherFeed?: PublisherFeed, options: { enabl
       console.log('🏢 Fetching publisher feed:', publisherFeed.feedUrl);
       
       try {
-        // Import the feed parser
-        const { fetchAndParseFeed } = await import('@/lib/feed-parser');
         const parsedFeed = await fetchAndParseFeed(publisherFeed.feedUrl);
         
         console.log('🏢 Publisher feed parsed:', {
