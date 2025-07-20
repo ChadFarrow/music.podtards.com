@@ -23,15 +23,13 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
     setIsLoading(true);
     setHasError(false);
 
-    // Convert HTTP to HTTPS for security
+    // Use image proxy for HTTP images to avoid mixed content
     let secureSrc = src;
     if (src.startsWith('http://')) {
-      secureSrc = src.replace('http://', 'https://');
-    }
-
-    // Use image proxy for HTTP images to avoid mixed content
-    if (src.startsWith('http://')) {
       secureSrc = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&h=800&fit=cover`;
+    } else if (src.startsWith('https://')) {
+      // For HTTPS images, try to load directly first
+      secureSrc = src;
     }
 
     setImgSrc(secureSrc);
@@ -43,6 +41,13 @@ export function SecureImage({ src, alt, className, fallback = '🎵' }: SecureIm
   };
 
   const handleError = () => {
+    // If the image failed and it's an HTTPS URL, try with proxy
+    if (imgSrc === src && src.startsWith('https://')) {
+      const proxySrc = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&h=800&fit=cover`;
+      setImgSrc(proxySrc);
+      return;
+    }
+    
     setIsLoading(false);
     setHasError(true);
   };
