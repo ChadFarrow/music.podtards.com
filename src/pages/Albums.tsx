@@ -3,6 +3,7 @@ import { AlbumViewEnhanced } from '@/components/AlbumViewEnhanced';
 import { AlbumGallery } from '@/components/AlbumGallery';
 
 import { PodcastPlayer } from '@/components/PodcastPlayer';
+import { NowPlayingBar } from '@/components/NowPlayingBar';
 import { VersionDisplay } from '@/components/VersionDisplay';
 import { Disc, Menu, X, Sun, Moon, ChevronDown, ChevronRight, Folder, Music } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -759,7 +760,7 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
       </div>
 
       {/* Audio Player */}
-      <PodcastPlayer />
+      <NowPlayingBar />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useSeoMeta } from '@unhead/react';
 import { AlbumGallery } from '@/components/AlbumGallery';
 import { PodcastPlayer } from '@/components/PodcastPlayer';
+import { NowPlayingBar } from '@/components/NowPlayingBar';
 import { VersionDisplay } from '@/components/VersionDisplay';
 import { Disc, Menu, X, Music as MusicIcon, Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -300,7 +301,7 @@ const Music = () => {
       </div>
 
       {/* Audio Player */}
-      <PodcastPlayer />
+      <NowPlayingBar />
     </div>
   );
 };
