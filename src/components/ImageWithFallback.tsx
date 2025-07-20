@@ -32,16 +32,44 @@ export function ImageWithFallback({
     setIsLoading(true);
     setHasError(false);
 
-    // Try the original URL first
-    setImgSrc(src);
-  }, [src]);
+    // Check if the image URL is from an external domain that might have CORS issues
+    const isExternalImage = src.startsWith('http') && !src.includes(window.location.hostname);
+    
+    if (isExternalImage) {
+      // For external images, try to load them with error handling
+      const img = new Image();
+      
+      // Set up error handling before setting src to avoid CORS errors in console
+      img.onload = () => {
+        setImgSrc(src);
+        setIsLoading(false);
+        setHasError(false);
+      };
+      
+      img.onerror = () => {
+        // Silently handle error and create fallback
+        createFallbackImage();
+      };
+      
+      // Set crossOrigin to anonymous to try to avoid CORS issues
+      img.crossOrigin = 'anonymous';
+      img.src = src;
+      
+      // Set a timeout to prevent hanging
+      const timeout = setTimeout(() => {
+        if (isLoading) {
+          createFallbackImage();
+        }
+      }, 3000);
+      
+      return () => clearTimeout(timeout);
+    } else {
+      // For same-origin images, load directly
+      setImgSrc(src);
+    }
+  }, [src, isLoading]);
 
-  const handleLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
-  };
-
-  const handleError = () => {
+  const createFallbackImage = () => {
     // Create a fallback data URL with the emoji
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -66,12 +94,20 @@ export function ImageWithFallback({
     
     const fallbackDataUrl = canvas.toDataURL();
     setImgSrc(fallbackDataUrl);
-    
-    // Set a timeout to mark as loaded
-    setTimeout(() => {
-      setIsLoading(false);
-      setHasError(false);
-    }, 100);
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handleError = () => {
+    // Only create fallback if we haven't already
+    if (!imgSrc.includes('data:image')) {
+      createFallbackImage();
+    }
   };
 
   if (hasError && !imgSrc) {
