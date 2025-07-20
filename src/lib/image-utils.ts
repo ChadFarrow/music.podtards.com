@@ -31,14 +31,16 @@ export function getSecureImageUrl(
     originalUrl.includes('behindthesch3m3s.com') ||
     originalUrl.includes('files.heycitizen.xyz') ||
     originalUrl.startsWith('http://') ||
-    originalUrl.includes('corsproxy.io');
+    originalUrl.includes('corsproxy.io') ||
+    originalUrl.includes('doerfelverse.com') ||
+    originalUrl.includes('cloudfront.net');
 
   if (!needsProxy) {
     return originalUrl;
   }
 
-  // Use images.weserv.nl as the primary proxy service
-  const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}&w=${width}&h=${height}&fit=cover&output=${format}&q=${quality}`;
+  // Use a more reliable proxy service
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`;
   
   return proxyUrl;
 }
@@ -49,9 +51,10 @@ export function getSecureImageUrl(
 export function getFallbackImageUrl(originalUrl: string): string[] {
   const fallbacks = [
     // Try with different proxy services
-    `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}&w=800&h=800&fit=cover&output=webp`,
-    `https://cors-anywhere.herokuapp.com/${originalUrl}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`,
+    `https://thingproxy.freeboard.io/fetch/${originalUrl}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(originalUrl)}`,
     // Add more fallback services as needed
   ];
   
@@ -83,4 +86,32 @@ export function getMusicFallbackEmoji(url: string): string {
     return a & a;
   }, 0);
   return fallbacks[Math.abs(hash) % fallbacks.length];
+}
+
+/**
+ * Create a data URL for a simple fallback image
+ */
+export function createFallbackDataUrl(emoji: string, size: number = 200): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  
+  if (ctx) {
+    // Create a gradient background
+    const gradient = ctx.createLinearGradient(0, 0, size, size);
+    gradient.addColorStop(0, '#1f2937');
+    gradient.addColorStop(1, '#374151');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    
+    // Add the emoji
+    ctx.font = `${size * 0.4}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText(emoji, size / 2, size / 2);
+  }
+  
+  return canvas.toDataURL();
 } 

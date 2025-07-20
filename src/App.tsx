@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlbumGallery } from './components/AlbumGallery';
 import { AlbumViewEnhanced } from './components/AlbumViewEnhanced';
 import { ScrollToTop } from './components/ScrollToTop';
+import { PodcastPlayer } from './components/PodcastPlayer';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,7 @@ function App() {
             <Route path="/albums" element={<AlbumGallery />} />
             <Route path="/albums/:albumSlug" element={<AlbumViewEnhanced />} />
           </Routes>
+          <PodcastPlayer />
         </div>
       </Router>
     </QueryClientProvider>
