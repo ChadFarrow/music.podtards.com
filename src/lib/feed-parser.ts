@@ -802,8 +802,12 @@ export async function fetchAndParseFeed(feedUrl: string): Promise<ParsedFeed> {
     const proxies = [
       // Primary: Use our server-side RSS proxy
       (url: string) => `/api/rss-proxy?url=${encodeURIComponent(url)}`,
-      // Fallback: External proxy if server is down
+      // Fallback proxies if server is down
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+      (url: string) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
+      (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+      (url: string) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
     ];
     
     let xmlText: string | undefined;
@@ -859,9 +863,17 @@ export async function fetchAndParseFeed(feedUrl: string): Promise<ParsedFeed> {
           if (!xmlText) {
             throw new Error('No content received from JSON proxy');
           }
-        } else {
-          // Handle direct XML/text response from other proxies
+        } else if (proxyUrl.includes('allorigins.win/raw') || 
+                   proxyUrl.includes('thingproxy.freeboard.io') ||
+                   proxyUrl.includes('corsproxy.io') ||
+                   proxyUrl.includes('cors.lol')) {
+          // These proxies return XML directly
           xmlText = await response.text();
+          console.log(`📡 Direct proxy returned ${xmlText.length} chars`);
+        } else {
+          // Handle any other direct XML/text response
+          xmlText = await response.text();
+          console.log(`📡 Unknown proxy returned ${xmlText.length} chars`);
         }
         
         console.log(`✅ Proxy ${i + 1} fetch successful - got ${xmlText?.length || 0} chars`);
