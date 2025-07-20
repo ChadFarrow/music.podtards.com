@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useColorExtraction } from '@/hooks/useColorExtraction';
 
 interface AlbumBackgroundProps {
@@ -8,6 +8,15 @@ interface AlbumBackgroundProps {
 
 export function AlbumBackground({ artwork, children }: AlbumBackgroundProps) {
   const { colors, isLoading } = useColorExtraction(artwork);
+
+  // Create CORS-safe image URL for background
+  const corsSafeImageUrl = useMemo(() => {
+    // Use CORS proxy for external images to prevent CORS errors
+    if (artwork && (artwork.includes('doerfelverse.com') || artwork.includes('cloudfront.net') || artwork.includes('wavlake.com'))) {
+      return `https://api.allorigins.win/raw?url=${encodeURIComponent(artwork)}`;
+    }
+    return artwork;
+  }, [artwork]);
 
 
 
@@ -41,7 +50,7 @@ export function AlbumBackground({ artwork, children }: AlbumBackgroundProps) {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url(${artwork})`,
+          backgroundImage: `url(${corsSafeImageUrl})`,
           filter: 'brightness(0.15) saturate(1.2)',
         }}
       />
