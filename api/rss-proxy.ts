@@ -27,44 +27,75 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('RSS Proxy: Fetching', url);
     
     // Validate URL
+    let parsedUrl;
     try {
-      new URL(url);
-    } catch {
-      res.status(400).json({ error: 'Invalid URL' });
+      parsedUrl = new URL(url);
+    } catch (urlError) {
+      console.error('Invalid URL:', url, urlError);
+      res.status(400).json({ error: 'Invalid URL format' });
+      return;
+    }
+
+    // Only allow HTTP and HTTPS protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      console.error('Invalid protocol:', parsedUrl.protocol);
+      res.status(400).json({ error: 'Only HTTP and HTTPS URLs are allowed' });
       return;
     }
 
     // Fetch the RSS feed with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
+    console.log('RSS Proxy: Making fetch request to', url);
     
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'PodtardstrMusic/1.0 (RSS Feed Reader)',
-        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        'User-Agent': 'Mozilla/5.0 (compatible; PodtardstrMusic/1.0; RSS Feed Reader)',
+        'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
+        'Accept-Encoding': 'gzip, deflate',
         'Cache-Control': 'no-cache'
-      }
+      },
+      redirect: 'follow'
     });
     
     clearTimeout(timeoutId);
+    
+    console.log('RSS Proxy: Response status:', response.status, response.statusText);
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+      console.error('RSS Proxy: Fetch failed:', errorMsg);
+      throw new Error(errorMsg);
     }
 
     const contentType = response.headers.get('content-type') || '';
-    const text = await response.text();
+    console.log('RSS Proxy: Content-Type:', contentType);
     
-    // Verify it's actually XML/RSS content
-    if (!text.includes('<?xml') && !text.includes('<rss') && !text.includes('<feed')) {
+    const text = await response.text();
+    console.log('RSS Proxy: Received', text.length, 'characters');
+    
+    // More lenient XML/RSS content validation
+    const trimmedText = text.trim();
+    const looksLikeXml = trimmedText.startsWith('<?xml') || 
+                        trimmedText.startsWith('<rss') || 
+                        trimmedText.startsWith('<feed') ||
+                        trimmedText.includes('<rss') ||
+                        trimmedText.includes('<feed') ||
+                        trimmedText.includes('<channel>');
+    
+    if (!looksLikeXml) {
+      console.error('RSS Proxy: Response does not appear to be XML/RSS content');
+      console.error('RSS Proxy: First 200 chars:', trimmedText.substring(0, 200));
       throw new Error('Response does not appear to be XML/RSS content');
     }
 
     // Set appropriate headers
-    res.setHeader('Content-Type', contentType.includes('xml') ? contentType : 'application/xml');
+    res.setHeader('Content-Type', contentType.includes('xml') ? contentType : 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
     
+    console.log('RSS Proxy: Sending successful response');
     res.status(200).send(text);
     
   } catch (error) {

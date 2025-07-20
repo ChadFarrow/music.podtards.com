@@ -774,15 +774,35 @@ export async function fetchAndParseFeed(feedUrl: string): Promise<ParsedFeed> {
     }
     
     // Validate that we got XML content
-    const trimmedXml = xmlText.trim();
+    let trimmedXml = xmlText.trim();
+    
+    // Remove any BOM (Byte Order Mark) characters that might be present
+    if (trimmedXml.charCodeAt(0) === 0xFEFF) {
+      trimmedXml = trimmedXml.slice(1);
+    }
+    
+    console.log('📋 XML validation check:', {
+      originalLength: xmlText.length,
+      trimmedLength: trimmedXml.length,
+      startsWithAngleBracket: trimmedXml.startsWith('<'),
+      firstChars: trimmedXml.substring(0, 50),
+      hasXmlDeclaration: trimmedXml.includes('<?xml'),
+      hasRssTag: trimmedXml.includes('<rss'),
+      hasFeedTag: trimmedXml.includes('<feed')
+    });
+    
     if (!trimmedXml.startsWith('<')) {
       console.warn('Response is not valid XML, returning empty feed');
+      console.warn('First 200 chars of response:', trimmedXml.substring(0, 200));
       return {
         title: 'Invalid Feed',
         description: 'Feed returned non-XML content',
         episodes: []
       };
     }
+    
+    // Update xmlText to the cleaned version
+    xmlText = trimmedXml;
     
     console.log('📋 Parsing RSS feed XML...', trimmedXml.substring(0, 200) + '...');
     
