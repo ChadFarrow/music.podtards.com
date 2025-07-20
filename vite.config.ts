@@ -2,7 +2,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 
 import react from "@vitejs/plugin-react-swc";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -64,17 +64,6 @@ export default defineConfig(() => {
     ],
         define: {
       'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
-    },
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: './src/test/setup.ts',
-      onConsoleLog(log) {
-        return !log.includes("React Router Future Flag Warning");
-      },
-      env: {
-        DEBUG_PRINT_LIMIT: '0', // Suppress DOM output that exceeds AI context windows
-      },
     },
     resolve: {
       alias: {
