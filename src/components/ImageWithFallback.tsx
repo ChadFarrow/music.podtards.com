@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { getSecureImageUrl, getFallbackImageUrl, getMusicFallbackEmoji, createFallbackDataUrl } from '@/lib/image-utils';
 
-interface SecureImageProps {
+interface ImageWithFallbackProps {
   src: string;
   alt: string;
   className?: string;
@@ -11,18 +10,17 @@ interface SecureImageProps {
   height?: number;
 }
 
-export function SecureImage({ 
+export function ImageWithFallback({ 
   src, 
   alt, 
   className, 
-  fallback,
-  width = 800,
-  height = 800
-}: SecureImageProps) {
+  fallback = '🎵',
+  width = 200,
+  height = 200
+}: ImageWithFallbackProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [fallbackIndex, setFallbackIndex] = useState(0);
 
   useEffect(() => {
     if (!src) {
@@ -33,12 +31,10 @@ export function SecureImage({
 
     setIsLoading(true);
     setHasError(false);
-    setFallbackIndex(0);
 
-    // Get the secure image URL
-    const secureSrc = getSecureImageUrl(src, { width, height });
-    setImgSrc(secureSrc);
-  }, [src, width, height]);
+    // Try the original URL first
+    setImgSrc(src);
+  }, [src]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -46,19 +42,29 @@ export function SecureImage({
   };
 
   const handleError = () => {
-    // Get fallback URLs
-    const fallbackUrls = getFallbackImageUrl(src);
+    // Create a fallback data URL with the emoji
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
     
-    // Try the next fallback URL
-    if (fallbackIndex < fallbackUrls.length) {
-      setFallbackIndex(prev => prev + 1);
-      setImgSrc(fallbackUrls[fallbackIndex]);
-      return;
+    if (ctx) {
+      // Create a gradient background
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, '#1f2937');
+      gradient.addColorStop(1, '#374151');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      
+      // Add the emoji
+      ctx.font = `${Math.min(width, height) * 0.4}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText(fallback, width / 2, height / 2);
     }
     
-    // If all proxies failed, create a fallback data URL
-    const fallbackEmoji = fallback || getMusicFallbackEmoji(src);
-    const fallbackDataUrl = createFallbackDataUrl(fallbackEmoji, Math.max(width, height));
+    const fallbackDataUrl = canvas.toDataURL();
     setImgSrc(fallbackDataUrl);
     
     // Set a timeout to mark as loaded
@@ -68,13 +74,10 @@ export function SecureImage({
     }, 100);
   };
 
-  // Get a music-themed fallback emoji if none provided
-  const fallbackEmoji = fallback || getMusicFallbackEmoji(src);
-
   if (hasError && !imgSrc) {
     return (
       <div className={cn('flex items-center justify-center bg-gray-800 text-gray-400 text-4xl', className)}>
-        {fallbackEmoji}
+        {fallback}
       </div>
     );
   }
@@ -99,4 +102,4 @@ export function SecureImage({
       />
     </>
   );
-}
+} 

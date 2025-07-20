@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { SecureImage } from '@/components/SecureImage';
+import { ImageWithFallback } from '@/components/ImageWithFallback';
 import { Disc } from 'lucide-react';
 import { FEATURED_ALBUMS, type Album } from '@/data/albums';
 
@@ -32,10 +32,13 @@ export function AlbumGallery({ albums = FEATURED_ALBUMS }: AlbumGalleryProps) {
             >
               <div className="aspect-square relative overflow-hidden">
                 {album.artwork ? (
-                  <SecureImage
+                  <ImageWithFallback
                     src={album.artwork}
                     alt={album.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    width={400}
+                    height={400}
+                    fallback="🎵"
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-800 flex items-center justify-center">
