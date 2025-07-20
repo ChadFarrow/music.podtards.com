@@ -474,9 +474,9 @@ async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
   const albumItems = element.querySelectorAll('podcast\\:remoteItem, remoteItem');
   console.log('🏢 parsePublisherAlbums: Found', albumItems.length, 'remoteItem elements');
   
-  // Limit to first 8 albums for performance
-  const limitedItems = Array.from(albumItems).slice(0, 8);
-  console.log('🏢 parsePublisherAlbums: Processing first', limitedItems.length, 'albums for performance');
+  // Process all albums (removed 8-album limit)
+  const limitedItems = Array.from(albumItems);
+  console.log('🏢 parsePublisherAlbums: Processing all', limitedItems.length, 'albums');
   
   const albums: PodRollItem[] = [];
   

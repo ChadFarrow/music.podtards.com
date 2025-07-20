@@ -17,7 +17,7 @@ export function PublisherAlbums({ albums, currentFeedUrl }: PublisherAlbumsProps
     return (
       <div className="space-y-6">
         <h3 className="text-xl font-semibold">Albums by this Artist</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <CardContent className="p-4">
@@ -32,10 +32,9 @@ export function PublisherAlbums({ albums, currentFeedUrl }: PublisherAlbumsProps
     );
   }
 
-  // Filter out the current feed and limit to 12 items
+  // Filter out the current feed and show all albums
   const otherAlbums = albums
-    .filter(album => album.feedUrl !== currentFeedUrl)
-    .slice(0, 12);
+    .filter(album => album.feedUrl !== currentFeedUrl);
 
   if (otherAlbums.length === 0) {
     return null;
@@ -53,7 +52,7 @@ export function PublisherAlbums({ albums, currentFeedUrl }: PublisherAlbumsProps
         <h3 className="text-xl font-semibold">Albums by this Artist</h3>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {otherAlbums.map((album, index) => (
           <Card 
             key={album.feedGuid || index}
