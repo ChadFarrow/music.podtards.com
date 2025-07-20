@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { usePodcastPlayer } from '@/hooks/usePodcastPlayer';
-import { podcastIndexFetch } from '@/hooks/usePodcastIndex';
+import { podcastIndexFetch, podcastIndexFetchFallback } from '@/hooks/usePodcastIndex';
 import type { PodcastIndexPodcast, PodcastIndexEpisode } from '@/hooks/usePodcastIndex';
 
 export function usePlayAll() {

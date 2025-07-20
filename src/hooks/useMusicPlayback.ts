@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { usePodcastPlayer } from '@/hooks/usePodcastPlayer';
-import { podcastIndexFetch } from '@/hooks/usePodcastIndex';
+import { podcastIndexFetch, podcastIndexFetchFallback } from '@/hooks/usePodcastIndex';
 import type { PodcastIndexPodcast, PodcastIndexEpisode } from '@/hooks/usePodcastIndex';
 
 export function useMusicPlayback() {
@@ -123,6 +123,17 @@ export function useMusicPlayback() {
       }
     } catch (error) {
       console.error('Failed to fetch album episodes:', error);
+      // Try fallback if API fails
+      try {
+        console.log('Trying fallback for episodes');
+        const fallbackResponse = await podcastIndexFetchFallback<PodcastIndexEpisode>('/episodes/byfeedid', {
+          id: podcast.id.toString(),
+          max: '10',
+        });
+        console.log('Fallback response:', fallbackResponse);
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
     } finally {
       // Clear loading state after a short delay
       setTimeout(() => {

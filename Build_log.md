@@ -2,46 +2,53 @@
 
 ---
 
-## 🔖 Quick Reference for Future Sessions (as of January 2025)
+## ⚠️ PROJECT DEPRECATED - JULY 20, 2025
 
 ### **Current Status**
-- **Version:** 1.0.0 (initial release)
-- **Status:** 🟢 Production Ready - Standalone Music Discovery Site
-- **Production URL:** https://music.podtards.com (custom domain - production)
-- **Preview URL:** https://podtardstr-music.vercel.app (main branch - preview)
-- **Repo:** https://github.com/ChadFarrow/podtardstr-music
-- **Main Site URL:** https://app.podtards.com (parent application)
-- **Main Site Repo:** https://github.com/ChadFarrow/podtardstr
+- **Status:** 🔴 DEPRECATED - Code split approach abandoned
+- **Replacement:** Using main podtardstr repository for music.podtards.com
+- **Production URL:** https://music.podtards.com (now deployed from main repo)
+- **Active Repo:** https://github.com/ChadFarrow/podtardstr
+- **Current Version:** 1.262 (in main repo)
 
-### **Key Architecture & Tech Stack**
-- **Frontend:** React 18.2.0 + TypeScript + Vite + TailwindCSS + shadcn/ui
-- **Lightning:** Bitcoin Connect for wallet integration, supports both LUD16/06 and keysend
-- **Audio:** HTML5 audio with Zustand state management for player
-- **Deployment:** Vercel with service worker for PWA functionality
-- **Mobile:** PWA installable on iOS/Android, fixed bottom player positioning
-- **Data:** RSS feed parsing with TanStack Query for caching
+### **Migration Summary**
+This separate music repository was abandoned in favor of using the main `podtardstr` repository with minimal changes:
+- Homepage route changed from Index (Top 100) to Albums
+- Site title updated for music focus
+- All album functionality preserved
+- Single repository approach much more maintainable
 
-### **Core Features Complete**
-✅ **Album Gallery** - Beautiful grid layout with featured albums  
-✅ **Individual Album Pages** - Immersive album experience with dynamic theming  
-✅ **Value4Value Payments** - Lightning splits with TLV metadata (Podcast Index 2.0 spec)  
-✅ **Podcast Player** - Queue management, working autoplay, sequential track ordering  
-✅ **Dynamic Color Theming** - Apple Music-style color extraction from album artwork  
-✅ **Mobile Optimized** - Fixed viewport, single-click play, loading states  
-✅ **PWA Support** - Full iOS/Android PWA with service worker, offline caching  
-✅ **RSS Feed Parsing** - Enhanced V4V data extraction with CORS-safe requests  
-✅ **Component Architecture** - Modular, focused components with single responsibility  
-✅ **Theme System** - Dark theme optimized for music listening experience  
+### **Why This Approach Was Abandoned**
+- Code splitting by Cursor didn't work properly
+- Separate repositories created maintenance overhead  
+- Missing dependencies and configuration issues
+- Complex build process for simple changes
+- Main repository already had all needed functionality
 
-### **Recent Critical Changes (Reference for Context)**
-- **Standalone Music Site Creation:** Successfully created independent music site with separate GitHub repository and Vercel deployment (January 2025)
-- **Custom Domain Setup:** Configured `music.podtards.com` domain in Vercel with DNS ready for configuration (January 2025)
-- **Component Architecture:** Modular design with single-responsibility components extracted from main project (January 2025)
-- **Dynamic Color Extraction:** Album artwork colors applied to UI elements for Apple Music-style theming (January 2025)
-- **Mobile Safe Area Support:** Comprehensive safe area insets for iPhone compatibility (January 2025)
-- **Immersive Album Experience:** Full-screen album backgrounds with overlay content (January 2025)
-- **Responsive Grid Layout:** Adaptive album gallery layout for all screen sizes (January 2025)
-- **PWA Implementation:** Full iOS/Android PWA with service worker and offline caching (January 2025)
+### **Final Solution**
+✅ **Used main podtardstr repository** with 2-line change
+✅ **Deployed to music.podtards.com** successfully  
+✅ **All features preserved** - albums, player, payments, theming
+✅ **Vercel project** connected to github.com/ChadFarrow/podtardstr
+✅ **Domain configured** and DNS propagated
+✅ **Both sites operational** - app.podtards.com (full) and music.podtards.com (music-only)  
+
+### **Lessons Learned**
+- **Minimal changes > complex splits**: 2-line change worked better than full code separation
+- **Single repository approach**: Easier maintenance and deployment  
+- **Use existing working code**: Don't rebuild what already works
+- **Simple is better**: Over-engineering creates more problems than it solves
+
+---
+
+## 🚮 **THIS PROJECT IS DEPRECATED**
+
+**Use the main repository instead:**
+- **Repository**: https://github.com/ChadFarrow/podtardstr  
+- **Live Site**: https://music.podtards.com
+- **Documentation**: See Build_log.md in main repository
+
+This folder and repository can be safely deleted.
 
 ### **Important Implementation Details**
 - **Component Architecture:** Modular design with single-responsibility components

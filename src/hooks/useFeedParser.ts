@@ -44,7 +44,7 @@ export function usePodcastIndexFeedData(feedUrl: string, options: { enabled?: bo
       }
 
       // Import the podcastIndexFetch function and types
-      const { podcastIndexFetch } = await import('@/hooks/usePodcastIndex');
+      const { podcastIndexFetch, podcastIndexFetchFallback } = await import('@/hooks/usePodcastIndex');
       type PodcastIndexPodcast = import('@/hooks/usePodcastIndex').PodcastIndexPodcast;
       
       try {
@@ -81,14 +81,11 @@ export function usePodcastIndexFeedData(feedUrl: string, options: { enabled?: bo
         };
       } catch (error) {
         console.error('Failed to fetch from Podcast Index API:', error);
-        return {
-          status: 'error',
-          feeds: [],
-          count: 0,
-          query: feedUrl,
-          description: 'Failed to fetch from Podcast Index API',
-          feed: null,
-        };
+        // Use fallback instead of returning error
+        return await podcastIndexFetchFallback<PodcastIndexPodcast>('/search/byterm', {
+          q: feedUrl,
+          max: '10',
+        });
       }
     },
     enabled: options.enabled !== false && !!feedUrl,
