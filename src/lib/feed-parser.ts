@@ -474,18 +474,22 @@ async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
   const albumItems = element.querySelectorAll('podcast\\:remoteItem, remoteItem');
   console.log('🏢 parsePublisherAlbums: Found', albumItems.length, 'remoteItem elements');
   
+  // Limit to first 8 albums for performance
+  const limitedItems = Array.from(albumItems).slice(0, 8);
+  console.log('🏢 parsePublisherAlbums: Processing first', limitedItems.length, 'albums for performance');
+  
   const albums: PodRollItem[] = [];
   
-  for (const item of Array.from(albumItems)) {
+  // Process albums in parallel with Promise.allSettled for better performance
+  const albumPromises = limitedItems.map(async (item) => {
     const medium = item.getAttribute('medium');
-    console.log('🏢 parsePublisherAlbums: Checking remoteItem with medium:', medium);
     
     if (medium === 'music') {
       const feedGuid = item.getAttribute('feedGuid') || undefined;
       const feedUrl = item.getAttribute('feedUrl') || undefined;
       
       if (feedGuid || feedUrl) {
-        console.log('🏢 parsePublisherAlbums: Found album:', {
+        console.log('🏢 parsePublisherAlbums: Processing album:', {
           feedGuid: feedGuid?.substring(0, 20) + '...',
           feedUrl: feedUrl?.substring(0, 50) + '...'
         });
@@ -499,7 +503,6 @@ async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
         if (feedUrl) {
           try {
             console.log('🏢 Fetching album details from:', feedUrl);
-            // Use the existing fetchAndParseFeed function directly instead of dynamic import
             const albumFeed = await fetchAndParseFeed(feedUrl);
             
             title = albumFeed.title || 'Unknown Album';
@@ -510,22 +513,37 @@ async function parsePublisherAlbums(element: Element): Promise<PodRollItem[]> {
             console.log('🏢 Album details fetched:', { title, author });
           } catch (error) {
             console.error('🏢 Failed to fetch album details:', error);
+            // Use fallback title from feed URL
+            title = feedUrl.split('/').pop()?.replace('.xml', '') || 'Unknown Album';
           }
         }
         
-        albums.push({
+        return {
           feedGuid,
           feedUrl,
           title,
           description,
           image,
           author
-        });
+        };
       }
     }
-  }
+    return null;
+  });
   
-  console.log('🏢 parsePublisherAlbums: Found', albums.length, 'albums');
+  // Wait for all album fetches to complete
+  const results = await Promise.allSettled(albumPromises);
+  
+  // Process results
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value) {
+      albums.push(result.value);
+    } else if (result.status === 'rejected') {
+      console.error('🏢 Failed to process album', index, ':', result.reason);
+    }
+  });
+  
+  console.log('🏢 parsePublisherAlbums: Successfully processed', albums.length, 'albums');
   console.log('🏢 parsePublisherAlbums: Album titles:', albums.map(a => a.title));
   return albums;
 }

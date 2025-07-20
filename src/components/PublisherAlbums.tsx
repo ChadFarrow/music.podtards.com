@@ -14,7 +14,22 @@ export function PublisherAlbums({ albums, currentFeedUrl }: PublisherAlbumsProps
   const navigate = useNavigate();
 
   if (!albums || albums.length === 0) {
-    return null;
+    return (
+      <div className="space-y-6">
+        <h3 className="text-xl font-semibold">Albums by this Artist</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-4">
+                <Skeleton className="w-full h-32 mb-3" />
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   // Filter out the current feed and limit to 12 items
