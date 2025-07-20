@@ -181,7 +181,11 @@ export function NowPlayingBar() {
         display: 'flex',
         alignItems: 'center',
         gap: '20px',
-        position: 'relative',
+        position: 'fixed',
+        bottom: '0',
+        left: '0',
+        right: '0',
+        zIndex: 50,
         overflow: 'hidden',
         transition: 'transform 0.3s ease',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'

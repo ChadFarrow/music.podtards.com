@@ -120,7 +120,7 @@ const Music = () => {
       )}
 
       {/* Hero Section */}
-      <div className="relative z-10 pt-16">
+      <div className="relative z-10 pt-16 pb-24">
         <div className={`text-center py-16 px-4 ${
           theme === 'dark' ? '' : 'bg-gradient-to-b from-white via-gray-50 to-gray-100'
         }`}>

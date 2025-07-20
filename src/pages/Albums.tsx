@@ -542,6 +542,18 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
               )}
             </button>
           )}
+          
+          {/* Logo and title */}
+          <div className="flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt="Podtardstr" 
+              className="w-8 h-8 object-contain"
+            />
+            <span className={`font-bold text-lg hidden sm:inline ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Podtardstr
+            </span>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
@@ -746,7 +758,7 @@ const Albums = ({ feedUrl }: AlbumsProps) => {
       )}
 
       {/* Main Content */}
-      <div className={`relative z-10 ${currentFeedUrl ? '' : 'pt-16'}`}>
+      <div className={`relative z-10 ${currentFeedUrl ? '' : 'pt-16'} pb-24`}>
         {currentFeedUrl ? (
           <AlbumViewEnhanced feedUrl={currentFeedUrl} />
         ) : (
