@@ -1,21 +1,13 @@
 import { Link } from 'react-router-dom';
 import { SecureImage } from '@/components/SecureImage';
 import { Disc } from 'lucide-react';
-
-interface Album {
-  id: string;
-  title: string;
-  artist: string;
-  artwork?: string;
-  feedUrl: string;
-  description?: string;
-}
+import { FEATURED_ALBUMS, type Album } from '@/data/albums';
 
 interface AlbumGalleryProps {
-  albums: Album[];
+  albums?: Album[];
 }
 
-export function AlbumGallery({ albums }: AlbumGalleryProps) {
+export function AlbumGallery({ albums = FEATURED_ALBUMS }: AlbumGalleryProps) {
   return (
     <div 
       className="min-h-screen bg-black text-white py-8 pt-12 pb-32"
