@@ -22,18 +22,15 @@ export default defineConfig(() => {
       proxy: {
         // Proxy for Podcast Index API
         '/api/podcastindex': {
-          target: 'https://api.podcastindex.org',
+          target: 'http://localhost:3001',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/podcastindex/, '/api/1.0'),
           configure: (proxy, _options) => {
-            proxy.on('error', (err, _req, _res) => {
-              console.log('proxy error', err);
-            });
-            proxy.on('proxyReq', (_proxyReq, req, _res) => {
-              console.log('Sending Request to the Target:', req.method, req.url);
-            });
-            proxy.on('proxyRes', (proxyRes, req, _res) => {
-              console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+            proxy.on('error', (err, _req, res) => {
+              console.error('❌ PodcastIndex proxy error:', err);
+              if (res && !res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'PodcastIndex API server unavailable' }));
+              }
             });
           },
         },

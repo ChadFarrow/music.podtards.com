@@ -1,6 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import crypto from 'crypto';
+import { config } from 'dotenv';
+
+// Load environment variables from .env file
+config();
+
+
 
 const app = express();
 const PORT = 3001;
@@ -84,6 +91,75 @@ app.get('/api/audio-proxy', async (req, res) => {
   } catch (error) {
     console.error('Audio Proxy Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// PodcastIndex API endpoint
+app.get('/api/podcastindex', async (req, res) => {
+  try {
+    const { path, ...queryParams } = req.query;
+    
+    if (!path || typeof path !== 'string') {
+      return res.status(400).json({ error: 'Path parameter is required' });
+    }
+
+    // Get API credentials from environment variables
+    const API_KEY = process.env.VITE_PODCAST_INDEX_API_KEY;
+    const API_SECRET = process.env.VITE_PODCAST_INDEX_API_SECRET;
+
+    if (!API_KEY || !API_SECRET) {
+      console.error('PodcastIndex API credentials not found in environment variables');
+      return res.status(500).json({ error: 'API credentials not configured' });
+    }
+
+    // Generate authentication headers
+    const apiHeaderTime = Math.floor(Date.now() / 1000);
+    const data4Hash = API_KEY + API_SECRET + apiHeaderTime;
+    const hash4Header = crypto.createHash('sha1').update(data4Hash).digest('hex');
+
+    const authHeaders = {
+      'X-Auth-Date': apiHeaderTime.toString(),
+      'X-Auth-Key': API_KEY,
+      'Authorization': hash4Header,
+      'User-Agent': 'PodtardsMusic/1.0',
+    };
+
+    // Build the API URL
+    const apiUrl = new URL(`/api/1.0/${path}`, 'https://api.podcastindex.org');
+    
+    // Add query parameters
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        apiUrl.searchParams.append(key, value);
+      }
+    });
+
+    console.log(`🔍 PodcastIndex API request: ${apiUrl.toString()}`);
+
+    // Make the request to PodcastIndex API
+    const response = await fetch(apiUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`❌ PodcastIndex API error: ${response.status} ${response.statusText}`);
+      return res.status(response.status).json({ 
+        error: `PodcastIndex API error: ${response.status} ${response.statusText}` 
+      });
+    }
+
+    const data = await response.json();
+    
+    console.log(`✅ PodcastIndex API response: ${response.status}`);
+    res.json(data);
+
+  } catch (error) {
+    console.error('❌ PodcastIndex API handler error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
